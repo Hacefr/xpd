@@ -1,0 +1,51 @@
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma', sans-serif; }
+
+/* Desktop Container (100vw x 100vh) */
+#desktop {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(180deg, #1b74bb 0%, #68b4eb 45%, #9fd86b 60%, #3e9819 100%);
+  overflow: hidden;
+}
+
+/* Icons */
+.desktop-icons { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 20px; z-index: 10; }
+.icon { display: flex; flex-direction: column; align-items: center; width: 75px; color: white; font-size: 11px; text-shadow: 1px 1px 2px #000; cursor: pointer; }
+.icon-img { font-size: 36px; margin-bottom: 4px; }
+.drag-over { background: rgba(255, 0, 0, 0.4); border-radius: 4px; }
+
+/* Taskbar */
+#taskbar {
+  position: absolute; bottom: 0; left: 0; width: 100%; height: 38px;
+  background: linear-gradient(180deg, #245edb 0%, #1941a5 10%, #1f52cf 90%, #16388e 100%);
+  display: flex; align-items: center; justify-content: space-between; z-index: 10000; border-top: 1px solid #4a8bf5;
+}
+#start-button {
+  background: linear-gradient(180deg, #388a38 0%, #2f6b1e 50%, #205012 100%);
+  color: white; font-weight: bold; font-style: italic; font-size: 14px; height: 100%; padding: 0 16px; border: none; border-top-right-radius: 12px; border-bottom-right-radius: 12px; cursor: pointer;
+}
+.taskbar-tray { display: flex; align-items: center; gap: 14px; padding: 0 15px; color: white; font-size: 11px; background: #0f3ba2; height: 100%; border-left: 1px solid #1c4bc2; }
+.meter-bar { width: 100px; height: 12px; background: #06183e; border: 1px solid #5a8fed; display: inline-block; overflow: hidden; vertical-align: middle; }
+#cpu-fill { width: 15%; height: 100%; background: #27d927; transition: width 0.2s; }
+
+/* Windows */
+.window { position: absolute; background: #ece9d8; border: 3px solid #0055ea; border-radius: 5px 5px 0 0; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 50; }
+.window-titlebar { background: linear-gradient(180deg, #0058e8 0%, #002b8a 100%); color: white; font-weight: bold; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+.close-x { background: #d93829; color: white; border: 1px solid #fff; border-radius: 3px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+.close-x:hover { background: #ff5242; }
+
+/* Volume Slider in Tray */
+.volume-container { position: relative; cursor: pointer; }
+#volume-popup { position: absolute; bottom: 35px; left: -10px; background: #ece9d8; border: 1px solid #7f9db9; padding: 10px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+
+/* Remote Cursors */
+.remote-cursor { position: absolute; pointer-events: none; z-index: 4000; transition: transform 0.08s ease-out; }
+.cursor-arrow { width: 0; height: 0; border-left: 12px solid #00ff66; border-bottom: 12px solid transparent; border-right: 6px solid transparent; }
+.cursor-tag { position: absolute; top: 14px; left: 10px; background: #00ff66; color: #003311; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+
+/* BSOD */
+#bsod { display: none; position: absolute; inset: 0; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 50px; z-index: 99999; }
+.reboot-btn { margin-top: 20px; padding: 8px 16px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; }
