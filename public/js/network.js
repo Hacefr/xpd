@@ -1,12 +1,35 @@
 const socket = io();
 
-// Join default room on load
-socket.on('connect', () => {
-  const roomName = "Workstation_01";
-  socket.emit('join-room', { roomId: roomName });
-});
+// 1. Start Solo Game (LOGiN button clicked)
+function startSoloGame() {
+  document.getElementById('main-menu').style.display = 'none';
+  const soloRoomId = "Solo_" + Math.floor(Math.random() * 10000);
+  socket.emit('join-room', { roomId: soloRoomId, name: "Solo_Agent" });
+}
 
-// Broadcast local cursor (0.0 to 1.0 percentages)
+// 2. Open / Close Rooms Lobby
+function openRoomsLobby() {
+  document.getElementById('rooms-modal').style.display = 'flex';
+}
+
+function closeRoomsLobby() {
+  document.getElementById('rooms-modal').style.display = 'none';
+}
+
+function joinSpecificRoom(roomName) {
+  document.getElementById('main-menu').style.display = 'none';
+  document.getElementById('rooms-modal').style.display = 'none';
+  socket.emit('join-room', { roomId: roomName, name: "Agent_" + Math.floor(Math.random() * 99) });
+}
+
+function createCustomRoom() {
+  const name = prompt("Enter Custom Workstation Room Name:", "My_Shift");
+  if (name) {
+    joinSpecificRoom(name);
+  }
+}
+
+// Broadcast local cursor
 window.addEventListener('mousemove', (e) => {
   const normX = e.clientX / window.innerWidth;
   const normY = e.clientY / window.innerHeight;
