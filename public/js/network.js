@@ -1,7 +1,9 @@
 const socket = io();
+window.isSoloMode = false;
 
-// 1. Start Solo Game (LOGiN button clicked)
+// 1. Start Solo Game (LOGiN clicked)
 function startSoloGame() {
+  window.isSoloMode = true; // Sets mode to solo -> deaths trigger BSOD immediately!
   document.getElementById('main-menu').style.display = 'none';
   const soloRoomId = "Solo_" + Math.floor(Math.random() * 10000);
   socket.emit('join-room', { roomId: soloRoomId, name: "Solo_Agent" });
@@ -17,15 +19,18 @@ function closeRoomsLobby() {
 }
 
 function joinSpecificRoom(roomName) {
+  window.isSoloMode = false;
+  const playerName = document.getElementById('player-name-input').value.trim() || "Agent_XP";
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('rooms-modal').style.display = 'none';
-  socket.emit('join-room', { roomId: roomName, name: "Agent_" + Math.floor(Math.random() * 99) });
+  socket.emit('join-room', { roomId: roomName, name: playerName });
 }
 
-function createCustomRoom() {
-  const name = prompt("Enter Custom Workstation Room Name:", "My_Shift");
-  if (name) {
-    joinSpecificRoom(name);
+// Host a Custom Room using the in-game input (No prompt!)
+function submitCustomRoom() {
+  const customName = document.getElementById('custom-room-input').value.trim();
+  if (customName) {
+    joinSpecificRoom(customName);
   }
 }
 
