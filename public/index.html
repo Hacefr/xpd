@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XP Defender</title>
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Socket.io automatically provided by backend -->
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+
+  <!-- Full-Screen Windows XP Desktop -->
+  <div id="desktop">
+
+    <!-- Desktop Icons -->
+    <div class="desktop-icons">
+      <div id="recycle-bin" class="icon">
+        <div class="icon-img">🗑️</div>
+        <span>Recycle Bin</span>
+      </div>
+      <div id="contacts-app" class="icon" onclick="openContactsApp()">
+        <div class="icon-img">📇</div>
+        <span>Contacts</span>
+      </div>
+      <div id="loserar-folder" class="icon" onclick="openLoserarFolder()">
+        <div class="icon-img">📁</div>
+        <span>Loserar_Temp</span>
+      </div>
+    </div>
+
+    <!-- Active Windows Container (Where popups and folders live) -->
+    <div id="windows-container"></div>
+
+    <!-- Remotely Connected Cursors Container -->
+    <div id="remote-cursors"></div>
+
+    <!-- Contacts / Clock-Out Window (Initially Hidden) -->
+    <div id="contacts-window" class="window" style="display:none; top: 120px; left: 35vw; width: 320px;">
+      <div class="window-titlebar">
+        <span>📇 Contacts - Attendance</span>
+        <div class="close-x" onclick="closeContactsApp()">✕</div>
+      </div>
+      <div class="window-body" style="text-align: center; padding: 15px;">
+        <p id="shift-status-text" style="margin-bottom: 12px; font-size: 12px;">Shift in progress (7 PM - 1 AM)</p>
+        <button id="clockout-btn" class="xp-btn" onclick="clockOutShift()" disabled>Clock Out (Locked)</button>
+      </div>
+    </div>
+
+    <!-- Windows XP Taskbar -->
+    <div id="taskbar">
+      <button id="start-button">❖ start</button>
+      <div class="taskbar-tray">
+        <div class="volume-container">
+          <span id="speaker-icon" onclick="toggleVolumeSlider()">🔊</span>
+          <div id="volume-popup" style="display:none;">
+            <input type="range" id="volume-slider" min="0" max="100" value="20" orient="vertical">
+          </div>
+        </div>
+        <div class="meter-box">
+          <span>CPU: </span>
+          <div class="meter-bar"><div id="cpu-fill"></div></div>
+          <span id="cpu-text">15%</span>
+        </div>
+        <div>BANK: $<span id="team-bank">0</span></div>
+        <div id="clock">7:00 PM</div>
+      </div>
+    </div>
+
+    <!-- BSOD Screen -->
+    <div id="bsod">
+      <h1>*** STOP: 0x000000D1 (SYSTEM_CRASH) ***</h1>
+      <p>A fatal infection crash has occurred. Workstation terminated.</p>
+      <button class="reboot-btn" onclick="location.reload()">Reboot System</button>
+    </div>
+
+  </div>
+
+  <!-- Load Game Scripts -->
+  <script src="js/threats.js"></script>
+  <script src="js/network.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
