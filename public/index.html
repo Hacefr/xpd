@@ -1,140 +1,118 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XP Defender</title>
-  <link rel="stylesheet" href="css/style.css">
-  <script src="/socket.io/socket.io.js"></script>
-</head>
-<body>
+* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma', sans-serif; }
 
-  <!-- Full-Screen Windows XP Desktop -->
-  <div id="desktop">
+/* Desktop */
+#desktop {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(180deg, #1b74bb 0%, #68b4eb 45%, #9fd86b 60%, #3e9819 100%);
+  overflow: hidden;
+}
 
-    <!-- Desktop Icons -->
-    <div class="desktop-icons">
-      <div id="recycle-bin" class="icon">
-        <div class="icon-img">🗑️</div>
-        <span>Recycle Bin</span>
-      </div>
-      <div id="contacts-app" class="icon" onclick="openContactsApp()">
-        <div class="icon-img">📇</div>
-        <span>Contacts</span>
-      </div>
-      <div id="loserar-folder" class="icon" onclick="openLoserarFolder()">
-        <div class="icon-img">📁</div>
-        <span>Loserar_Temp</span>
-      </div>
-    </div>
+/* Icons */
+.desktop-icons { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 20px; z-index: 10; }
+.icon { display: flex; flex-direction: column; align-items: center; width: 75px; color: white; font-size: 11px; text-shadow: 1px 1px 2px #000; cursor: pointer; }
+.icon-img { font-size: 36px; margin-bottom: 4px; }
+.drag-over { background: rgba(255, 0, 0, 0.4); border-radius: 4px; }
 
-    <!-- Active Windows Container -->
-    <div id="windows-container"></div>
+/* In-Game Input */
+.xp-input { background: #fff; border: 2px inset #7f9db9; padding: 4px 8px; font-family: Tahoma; font-size: 12px; outline: none; }
+.xp-input:focus { border-color: #0055ea; }
 
-    <!-- Remotely Connected Cursors Container -->
-    <div id="remote-cursors"></div>
+/* Overlays */
+.menu-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 40, 100, 0.55);
+  backdrop-filter: blur(3px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 90000;
+}
+.game-logo { font-size: 52px; color: #fff; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 40px; letter-spacing: 3px; }
+.menu-buttons { display: flex; gap: 40px; }
 
-    <!-- Contacts / Clock-Out Window -->
-    <div id="contacts-window" class="window" style="display:none; top: 120px; left: 35vw; width: 320px;">
-      <div class="window-titlebar">
-        <span>📇 Contacts - Attendance</span>
-        <div class="close-x" onclick="closeContactsApp()">✕</div>
-      </div>
-      <div class="window-body" style="text-align: center; padding: 15px;">
-        <p id="shift-status-text" style="margin-bottom: 12px; font-size: 12px;">Shift in progress (7 PM - 1 AM)</p>
-        <button id="clockout-btn" class="xp-btn" onclick="clockOutShift()" disabled>Clock Out (Locked)</button>
-      </div>
-    </div>
+.retro-btn {
+  background: linear-gradient(180deg, #6ee5d8 0%, #159c99 50%, #0c6260 100%);
+  border: 4px solid #b7f6ee;
+  border-radius: 18px;
+  padding: 12px 28px;
+  font-size: 32px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 2px 2px 0 #074745;
+  cursor: pointer;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.7);
+  display: flex; align-items: center; justify-content: center; min-width: 180px; min-height: 80px;
+}
+.retro-btn:hover { transform: scale(1.05); }
+.retro-btn img { max-height: 60px; max-width: 160px; display: block; }
 
-    <!-- MAIN MENU OVERLAY -->
-    <div id="main-menu" class="menu-overlay">
-      <h1 class="game-logo">XP DEFENDER</h1>
-      <div class="menu-buttons">
-        <!-- Button 1: LOGiN (Solo Shift) -->
-        <button class="retro-btn" onclick="startSoloGame()">
-          <img src="assets/images/login.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="LOGiN">
-          <span style="display:none;">LOGiN</span>
-        </button>
+/* Draft Cards (Pick 1 of 3) */
+.draft-cards-container { display: flex; gap: 14px; justify-content: center; margin-top: 10px; }
+.draft-card {
+  flex: 1;
+  background: #fff;
+  border: 2px solid #0055ea;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: transform 0.1s, border-color 0.1s;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+.draft-card:hover { transform: translateY(-4px); border-color: #ff9900; box-shadow: 0 8px 16px rgba(0,0,0,0.25); }
+.draft-card h4 { font-size: 13px; margin-bottom: 6px; }
+.draft-card p { font-size: 11px; color: #555; line-height: 1.3; margin-bottom: 10px; }
+.card-upgrade { border-color: #27d927; }
+.card-curse { border-color: #d92727; }
+.card-badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: bold; color: #fff; border-radius: 3px; margin-bottom: 6px; }
+.badge-up { background: #199419; }
+.badge-down { background: #b81414; }
 
-        <!-- Button 2: ROOMS (Multiplayer Lobbies) -->
-        <button class="retro-btn" onclick="openRoomsLobby()">
-          <img src="assets/images/rooms.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="ROOMS">
-          <span style="display:none;">ROOMS</span>
-        </button>
-      </div>
-    </div>
+/* Rooms List Box */
+.room-box { background: #fff; border: 1px solid #7f9db9; height: 120px; overflow-y: auto; }
+.room-row { padding: 8px 10px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11px; }
+.room-row:hover { background: #316ac5; color: white; }
+.xp-dialog-btn { padding: 5px 12px; background: #ece9d8; border: 1px solid #003c74; border-radius: 3px; font-size: 11px; cursor: pointer; }
+.xp-dialog-btn:hover { background: #e0eafc; }
 
-    <!-- IN-GAME ROOMS & LOBBY WINDOW (No browser prompts!) -->
-    <div id="rooms-modal" class="menu-overlay" style="display:none;">
-      <div class="window" style="width: 480px; position: relative;">
-        <div class="window-titlebar">
-          <span>Network Neighborhood - Join or Host Workstation</span>
-          <div class="close-x" onclick="closeRoomsLobby()">✕</div>
-        </div>
-        <div class="window-body" style="padding: 15px; background: #ece9d8;">
-          
-          <!-- Agent Name Input inside the game -->
-          <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-            <label style="font-size: 11px; font-weight: bold;">Your Name:</label>
-            <input type="text" id="player-name-input" class="xp-input" value="Agent_XP" maxlength="15">
-          </div>
+/* Taskbar */
+#taskbar {
+  position: absolute; bottom: 0; left: 0; width: 100%; height: 38px;
+  background: linear-gradient(180deg, #245edb 0%, #1941a5 10%, #1f52cf 90%, #16388e 100%);
+  display: flex; align-items: center; justify-content: space-between; z-index: 10000; border-top: 1px solid #4a8bf5;
+}
+#start-button {
+  background: linear-gradient(180deg, #388a38 0%, #2f6b1e 50%, #205012 100%);
+  color: white; font-weight: bold; font-style: italic; font-size: 14px; height: 100%; padding: 0 16px; border: none; border-top-right-radius: 12px; border-bottom-right-radius: 12px; cursor: pointer;
+}
+.taskbar-tray { display: flex; align-items: center; gap: 14px; padding: 0 15px; color: white; font-size: 11px; background: #0f3ba2; height: 100%; border-left: 1px solid #1c4bc2; }
+.meter-bar { width: 100px; height: 12px; background: #06183e; border: 1px solid #5a8fed; display: inline-block; overflow: hidden; vertical-align: middle; }
+#cpu-fill { width: 15%; height: 100%; background: #27d927; transition: width 0.2s; }
 
-          <p style="font-size: 11px; margin-bottom: 6px; font-weight: bold;">Select a Public Room:</p>
-          <div class="room-box">
-            <div class="room-row" onclick="joinSpecificRoom('Workstation_Alpha')">
-              <span>🖥️ Workstation_Alpha</span>
-              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
-            </div>
-            <div class="room-row" onclick="joinSpecificRoom('IT_Graveyard_Shift')">
-              <span>💾 IT_Graveyard_Shift</span>
-              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
-            </div>
-          </div>
+/* Windows */
+.window { position: absolute; background: #ece9d8; border: 3px solid #0055ea; border-radius: 5px 5px 0 0; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 50; }
+.window-titlebar { background: linear-gradient(180deg, #0058e8 0%, #002b8a 100%); color: white; font-weight: bold; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
+.close-x { background: #d93829; color: white; border: 1px solid #fff; border-radius: 3px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+.close-x:hover { background: #ff5242; }
 
-          <!-- Create Custom Room inside the game -->
-          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #c0c0c0; display: flex; gap: 8px;">
-            <input type="text" id="custom-room-input" class="xp-input" placeholder="New Room Name..." style="flex: 1;">
-            <button class="xp-dialog-btn" onclick="submitCustomRoom()">Host Room</button>
-            <button class="xp-dialog-btn" onclick="closeRoomsLobby()">Cancel</button>
-          </div>
+/* Volume */
+.volume-container { position: relative; cursor: pointer; }
+#volume-popup { position: absolute; bottom: 35px; left: -10px; background: #ece9d8; border: 1px solid #7f9db9; padding: 10px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
 
-        </div>
-      </div>
-    </div>
+/* Remote Cursors */
+.remote-cursor { position: absolute; pointer-events: none; z-index: 4000; transition: transform 0.08s ease-out; }
+.cursor-arrow { width: 0; height: 0; border-left: 12px solid #00ff66; border-bottom: 12px solid transparent; border-right: 6px solid transparent; }
+.cursor-tag { position: absolute; top: 14px; left: 10px; background: #00ff66; color: #003311; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
 
-    <!-- Windows XP Taskbar -->
-    <div id="taskbar">
-      <button id="start-button">❖ start</button>
-      <div class="taskbar-tray">
-        <div class="volume-container">
-          <span id="speaker-icon" onclick="toggleVolumeSlider()">🔊</span>
-          <div id="volume-popup" style="display:none;">
-            <input type="range" id="volume-slider" min="0" max="100" value="20" orient="vertical">
-          </div>
-        </div>
-        <div class="meter-box">
-          <span>CPU: </span>
-          <div class="meter-bar"><div id="cpu-fill"></div></div>
-          <span id="cpu-text">15%</span>
-        </div>
-        <div>BANK: $<span id="team-bank">0</span></div>
-        <div id="clock">7:00 PM</div>
-      </div>
-    </div>
-
-    <!-- FULL-SCREEN BLUE SCREEN OF DEATH (BSOD) -->
-    <div id="bsod">
-      <h1 class="bsod-title">*** STOP: 0x000000D1 (SYSTEM_CRASH) ***</h1>
-      <p id="bsod-reason" style="margin-top: 20px;">A critical error has occurred. Antivirus process terminated.</p>
-      <p style="margin-top: 15px;">Technical Information:<br>*** STOP: 0x00000050 (0xFD3094C2, 0x00000001, 0xFBFE7617, 0x00000000)</p>
-      <button class="reboot-btn" onclick="location.reload()">Reboot Windows XP (Play Again)</button>
-    </div>
-
-  </div>
-
-  <!-- Load Game Scripts -->
-  <script src="js/threats.js"></script>
-  <script src="js/network.js"></script>
-  <script src="js/main.js"></script>
-</body>
-</html>
+/* BSOD */
+#bsod { display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 60px; z-index: 999999; }
+.bsod-title { background: #aaa; color: #0000aa; display: inline-block; padding: 2px 10px; font-size: 18px; margin-bottom: 20px; }
+.reboot-btn { margin-top: 30px; padding: 10px 20px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; background: #fff; color: #0000aa; border: none; }
