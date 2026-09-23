@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>XP Defender</title>
   <link rel="stylesheet" href="css/style.css">
-  <!-- Socket.io automatically provided by backend -->
   <script src="/socket.io/socket.io.js"></script>
 </head>
 <body>
@@ -23,19 +22,19 @@
         <div class="icon-img">📇</div>
         <span>Contacts</span>
       </div>
-      <div id="loserar-folder" class="icon" onclick="openLoserarFolder()">
+      <div id="loserar-folder" class="icon">
         <div class="icon-img">📁</div>
         <span>Loserar_Temp</span>
       </div>
     </div>
 
-    <!-- Active Windows Container (Where popups and folders live) -->
+    <!-- Active Windows Container -->
     <div id="windows-container"></div>
 
     <!-- Remotely Connected Cursors Container -->
     <div id="remote-cursors"></div>
 
-    <!-- Contacts / Clock-Out Window (Initially Hidden) -->
+    <!-- Contacts / Clock-Out Window -->
     <div id="contacts-window" class="window" style="display:none; top: 120px; left: 35vw; width: 320px;">
       <div class="window-titlebar">
         <span>📇 Contacts - Attendance</span>
@@ -44,6 +43,51 @@
       <div class="window-body" style="text-align: center; padding: 15px;">
         <p id="shift-status-text" style="margin-bottom: 12px; font-size: 12px;">Shift in progress (7 PM - 1 AM)</p>
         <button id="clockout-btn" class="xp-btn" onclick="clockOutShift()" disabled>Clock Out (Locked)</button>
+      </div>
+    </div>
+
+    <!-- MAIN MENU OVERLAY (Your LOGiN and ROOMS screen) -->
+    <div id="main-menu" class="menu-overlay">
+      <h1 class="game-logo">XP DEFENDER</h1>
+      <div class="menu-buttons">
+        <!-- Button 1: LOGiN (Solo Shift) -->
+        <button class="retro-btn" onclick="startSoloGame()">
+          <img src="assets/images/login.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="LOGiN">
+          <span style="display:none;">LOGiN</span>
+        </button>
+
+        <!-- Button 2: ROOMS (Multiplayer Lobbies) -->
+        <button class="retro-btn" onclick="openRoomsLobby()">
+          <img src="assets/images/rooms.png" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" alt="ROOMS">
+          <span style="display:none;">ROOMS</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ROOMS / LOBBY MODAL DIALOG -->
+    <div id="rooms-modal" class="menu-overlay" style="display:none;">
+      <div class="window" style="width: 440px; position: relative;">
+        <div class="window-titlebar">
+          <span>Network Neighborhood - Select a Workstation</span>
+          <div class="close-x" onclick="closeRoomsLobby()">✕</div>
+        </div>
+        <div class="window-body" style="padding: 15px; background: #ece9d8;">
+          <p style="font-size: 11px; margin-bottom: 8px;">Available Workstations / Group Chats:</p>
+          <div class="room-box">
+            <div class="room-row" onclick="joinSpecificRoom('Workstation_Alpha')">
+              <span>🖥️ Workstation_Alpha</span>
+              <span style="color:#008800;">[Join Room]</span>
+            </div>
+            <div class="room-row" onclick="joinSpecificRoom('IT_Graveyard_Shift')">
+              <span>💾 IT_Graveyard_Shift</span>
+              <span style="color:#008800;">[Join Room]</span>
+            </div>
+          </div>
+          <div style="display:flex; justify-content:space-between; margin-top:12px;">
+            <button class="xp-dialog-btn" onclick="createCustomRoom()">+ New Room</button>
+            <button class="xp-dialog-btn" onclick="closeRoomsLobby()">Cancel</button>
+          </div>
+        </div>
       </div>
     </div>
 
