@@ -16,18 +16,21 @@ let isPM = true;
 let isOvertime = false;
 let teamBank = 0;
 let cpuUsage = 15;
+let isGameOver = false;
 
 const clockDisplay = document.getElementById('clock');
 const clockoutBtn = document.getElementById('clockout-btn');
 const shiftStatus = document.getElementById('shift-status-text');
+const cpuFill = document.getElementById('cpu-fill');
+const cpuText = document.getElementById('cpu-text');
 
 // 1 Hour in-game = ~20 seconds real time
 setInterval(() => {
+  if (isGameOver) return;
   currentHour++;
   if (currentHour === 12) isPM = false; // Midnight
   if (currentHour > 12) currentHour = 1;
 
-  // Reached 1:00 AM? Unlock Overtime & Clock-Out!
   if (currentHour === 1 && !isPM) {
     isOvertime = true;
     clockoutBtn.disabled = false;
@@ -36,12 +39,24 @@ setInterval(() => {
   }
 
   if (isOvertime) {
-    teamBank += 20; // +$20 Overtime Pay
+    teamBank += 20;
     document.getElementById('team-bank').innerText = teamBank;
   }
 
   clockDisplay.innerText = `${currentHour}:00 ${isPM ? 'PM' : 'AM'}`;
 }, 18000);
+
+// Passive CPU Tick & BSOD check
+setInterval(() => {
+  if (isGameOver) return;
+  cpuUsage = Math.min(100, cpuUsage + 0.15);
+  cpuFill.style.width = cpuUsage + '%';
+  cpuText.innerText = Math.floor(cpuUsage) + '%';
+
+  if (cpuUsage >= 100) {
+    triggerBSOD("CPU usage exceeded 100%. Hardware overheated.");
+  }
+}, 300);
 
 // Contacts App Logic
 function openContactsApp() {
@@ -55,10 +70,28 @@ function clockOutShift() {
   location.reload();
 }
 
-// Eliminate Player (Client-side fail)
+// TRIGGER AUTHENTIC BSOD
+function triggerBSOD(reason = "A fatal exception has occurred.") {
+  isGameOver = true;
+  playSynthBeep(80, 'sawtooth', 0.8);
+  document.getElementById('bsod-reason').innerText = reason;
+  document.getElementById('bsod').style.display = 'block';
+}
+
+// Eliminate Player logic (Solo vs Multiplayer)
 function eliminatePlayer(reason) {
-  playSynthBeep(120, 'sawtooth', 0.5);
-  alert(`ELIMINATED: ${reason} - You are now spectating.`);
+  // If Solo: Instant Game Over & BSOD!
+  if (window.isSoloMode) {
+    triggerBSOD(reason);
+  } else {
+    // If Multiplayer: Enter spectator
+    playSynthBeep(120, 'sawtooth', 0.5);
+    const overlay = document.createElement('div');
+    overlay.className = 'menu-overlay';
+    overlay.style.background = 'rgba(0,0,0,0.7)';
+    overlay.innerHTML = `<h2 style="color:red;">ELIMINATED: ${reason}</h2><p style="color:white; margin-top:8px;">You are now spectating your team.</p>`;
+    document.getElementById('desktop').appendChild(overlay);
+  }
 }
 
 // Speaker Tray Toggle
@@ -67,7 +100,7 @@ function toggleVolumeSlider() {
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
 }
 
-// Auto-test: Trigger ERR after 5 seconds to test
+// Auto-test: Spawn ERR after 6 seconds
 setTimeout(() => {
-  Threats.spawnERR();
-}, 5000);
+  if (!isGameOver) Threats.spawnERR();
+}, 6000);
