@@ -22,7 +22,7 @@
         <div class="icon-img">📇</div>
         <span>Contacts</span>
       </div>
-      <div id="loserar-folder" class="icon">
+      <div id="loserar-folder" class="icon" onclick="openLoserarFolder()">
         <div class="icon-img">📁</div>
         <span>Loserar_Temp</span>
       </div>
@@ -46,7 +46,7 @@
       </div>
     </div>
 
-    <!-- MAIN MENU OVERLAY (Your LOGiN and ROOMS screen) -->
+    <!-- MAIN MENU OVERLAY -->
     <div id="main-menu" class="menu-overlay">
       <h1 class="game-logo">XP DEFENDER</h1>
       <div class="menu-buttons">
@@ -64,29 +64,40 @@
       </div>
     </div>
 
-    <!-- ROOMS / LOBBY MODAL DIALOG -->
+    <!-- IN-GAME ROOMS & LOBBY WINDOW (No browser prompts!) -->
     <div id="rooms-modal" class="menu-overlay" style="display:none;">
-      <div class="window" style="width: 440px; position: relative;">
+      <div class="window" style="width: 480px; position: relative;">
         <div class="window-titlebar">
-          <span>Network Neighborhood - Select a Workstation</span>
+          <span>Network Neighborhood - Join or Host Workstation</span>
           <div class="close-x" onclick="closeRoomsLobby()">✕</div>
         </div>
         <div class="window-body" style="padding: 15px; background: #ece9d8;">
-          <p style="font-size: 11px; margin-bottom: 8px;">Available Workstations / Group Chats:</p>
+          
+          <!-- Agent Name Input inside the game -->
+          <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <label style="font-size: 11px; font-weight: bold;">Your Name:</label>
+            <input type="text" id="player-name-input" class="xp-input" value="Agent_XP" maxlength="15">
+          </div>
+
+          <p style="font-size: 11px; margin-bottom: 6px; font-weight: bold;">Select a Public Room:</p>
           <div class="room-box">
             <div class="room-row" onclick="joinSpecificRoom('Workstation_Alpha')">
               <span>🖥️ Workstation_Alpha</span>
-              <span style="color:#008800;">[Join Room]</span>
+              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
             </div>
             <div class="room-row" onclick="joinSpecificRoom('IT_Graveyard_Shift')">
               <span>💾 IT_Graveyard_Shift</span>
-              <span style="color:#008800;">[Join Room]</span>
+              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
             </div>
           </div>
-          <div style="display:flex; justify-content:space-between; margin-top:12px;">
-            <button class="xp-dialog-btn" onclick="createCustomRoom()">+ New Room</button>
+
+          <!-- Create Custom Room inside the game -->
+          <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #c0c0c0; display: flex; gap: 8px;">
+            <input type="text" id="custom-room-input" class="xp-input" placeholder="New Room Name..." style="flex: 1;">
+            <button class="xp-dialog-btn" onclick="submitCustomRoom()">Host Room</button>
             <button class="xp-dialog-btn" onclick="closeRoomsLobby()">Cancel</button>
           </div>
+
         </div>
       </div>
     </div>
@@ -111,11 +122,12 @@
       </div>
     </div>
 
-    <!-- BSOD Screen -->
+    <!-- FULL-SCREEN BLUE SCREEN OF DEATH (BSOD) -->
     <div id="bsod">
-      <h1>*** STOP: 0x000000D1 (SYSTEM_CRASH) ***</h1>
-      <p>A fatal infection crash has occurred. Workstation terminated.</p>
-      <button class="reboot-btn" onclick="location.reload()">Reboot System</button>
+      <h1 class="bsod-title">*** STOP: 0x000000D1 (SYSTEM_CRASH) ***</h1>
+      <p id="bsod-reason" style="margin-top: 20px;">A critical error has occurred. Antivirus process terminated.</p>
+      <p style="margin-top: 15px;">Technical Information:<br>*** STOP: 0x00000050 (0xFD3094C2, 0x00000001, 0xFBFE7617, 0x00000000)</p>
+      <button class="reboot-btn" onclick="location.reload()">Reboot Windows XP (Play Again)</button>
     </div>
 
   </div>
