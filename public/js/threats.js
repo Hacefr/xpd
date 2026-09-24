@@ -1,4 +1,36 @@
 // --- XP DEFENDER THREATS & CURSES SYSTEM ---
+
+// Universal Window Dragging Utility
+function makeWindowDraggable(win) {
+  const titlebar = win.querySelector('.window-titlebar');
+  if (!titlebar) return;
+
+  titlebar.style.cursor = 'move';
+  let isDragging = false;
+  let startX = 0, startY = 0;
+
+  titlebar.onmousedown = (e) => {
+    isDragging = true;
+    startX = e.clientX - win.offsetLeft;
+    startY = e.clientY - win.offsetTop;
+    win.style.zIndex = ++window.highestZIndex;
+  };
+
+  window.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const maxX = window.innerWidth - win.offsetWidth;
+    const maxY = window.innerHeight - win.offsetHeight - 40; // Avoid taskbar
+    win.style.left = Math.max(0, Math.min(maxX, e.clientX - startX)) + 'px';
+    win.style.top = Math.max(0, Math.min(maxY, e.clientY - startY)) + 'px';
+  });
+
+  window.addEventListener('mouseup', () => {
+    isDragging = false;
+  });
+}
+
+window.highestZIndex = 5000;
+
 const Threats = {
   loserarFiles: 0,
   loserarInterval: null,
@@ -10,28 +42,25 @@ const Threats = {
   eyeTimeout2: null,
   eyeFreezeChecker: null,
 
-  // MASTER RESET: Instantly purges and freezes all threats!
+  // MASTER RESET
   resetAll() {
-    // 1. Stop ERR
     clearInterval(this.errInterval);
     const errWin = document.getElementById('err-window');
     if (errWin) errWin.remove();
 
-    // 2. Stop Loserar
     clearInterval(this.loserarInterval);
     clearInterval(this.loserarTuneInterval);
     this.loserarInterval = null;
     this.loserarTuneInterval = null;
     this.loserarFiles = 0;
     this.updateLoserarFolderView();
+    this.removeScrambleFiles();
 
-    // 3. Stop QUIET!
     clearInterval(this.quietInterval);
     this.quietActive = false;
     const slider = document.getElementById('volume-slider');
     if (slider) slider.value = 20;
 
-    // 4. Stop ALLSEEINGEYE
     clearTimeout(this.eyeTimeout1);
     clearTimeout(this.eyeTimeout2);
     if (this.eyeFreezeChecker) {
@@ -43,19 +72,17 @@ const Threats = {
     const desktop = document.getElementById('desktop');
     if (desktop) desktop.style.filter = 'none';
 
-    // Clear active windows container
     const container = document.getElementById('windows-container');
     if (container) container.innerHTML = '';
   },
 
   // ==========================================
-  // 1. ERR (Client-Sided QTE)
+  // 1. ERR (Client-Sided QTE - Draggable!)
   // ==========================================
   spawnERR(curseBrokenScript = false) {
-    // MUST BE IN ACTIVE SHIFT!
     if (!inShift || isGameOver || document.getElementById('err-window')) return;
 
-    const targetNumber = Math.floor(Math.random() * 5) + 3; // 3 to 7
+    const targetNumber = Math.floor(Math.random() * 5) + 3;
     let currentCount = 0;
     
     const win = document.createElement('div');
@@ -64,7 +91,7 @@ const Threats = {
     win.style.width = '240px';
     win.style.left = (window.innerWidth / 2 - 120) + 'px';
     win.style.top = (window.innerHeight / 2 - 100) + 'px';
-    win.style.zIndex = 6000;
+    win.style.zIndex = ++window.highestZIndex;
     win.innerHTML = `
       <div class="window-titlebar" style="background:#cc0000;">
         <span>⚠️ Critical Exception</span>
@@ -79,6 +106,7 @@ const Threats = {
     `;
 
     document.getElementById('windows-container').appendChild(win);
+    makeWindowDraggable(win); // DRAGGABLE!
 
     clearInterval(this.errInterval);
     this.errInterval = setInterval(() => {
@@ -114,11 +142,16 @@ const Threats = {
   },
 
   // ==========================================
-  // 2. LOSERAR (Server-Sided Folder Files)
+  // 2. LOSERAR (Folder Files + 40+ Scramble Curse!)
   // ==========================================
   startLoserar(scramble = false) {
     if (!inShift || isGameOver || this.loserarInterval) return;
     this.loserarFiles = 0;
+
+    // SCRAMBLE CURSE: Floods 45+ decoy files across the entire desktop!
+    if (scramble) {
+      this.spawnScrambleFiles();
+    }
 
     this.loserarInterval = setInterval(() => {
       if (!inShift || isGameOver) {
@@ -128,6 +161,11 @@ const Threats = {
 
       this.loserarFiles++;
       this.updateLoserarFolderView();
+
+      // If scramble is on, drop infected files on the desktop too!
+      if (scramble) {
+        this.dropScrambleRealFile(this.loserarFiles);
+      }
 
       if (this.loserarFiles >= 3 && !this.loserarTuneInterval) {
         let tuneNote = 0;
@@ -151,12 +189,58 @@ const Threats = {
     }, 7000);
   },
 
+  // 40+ Decoy Files Spawner
+  spawnScrambleFiles() {
+    this.removeScrambleFiles();
+    const decoys = ['my_song.mp3', 'taxes_2004.doc', 'family_photo.bmp', 'passwords.txt', 'notes.ini', 'receipt.pdf', 'setup.exe', 'cookie.tmp'];
+    
+    for (let i = 0; i < 45; i++) {
+      const file = document.createElement('div');
+      file.className = 'scramble-file decoy-file';
+      file.style.left = (Math.random() * (window.innerWidth - 120) + 20) + 'px';
+      file.style.top = (Math.random() * (window.innerHeight - 140) + 20) + 'px';
+      file.innerHTML = `📄 <span style="font-size:10px; color:white; text-shadow:1px 1px 2px #000;">${decoys[Math.floor(Math.random() * decoys.length)]}</span>`;
+      
+      // Decoys can be clicked to clear
+      file.onclick = () => file.remove();
+      document.getElementById('desktop').appendChild(file);
+    }
+  },
+
+  dropScrambleRealFile(id) {
+    const file = document.createElement('div');
+    file.className = 'scramble-file real-rar-file';
+    file.id = 'scramble-real-' + id;
+    file.style.left = (Math.random() * (window.innerWidth - 120) + 20) + 'px';
+    file.style.top = (Math.random() * (window.innerHeight - 140) + 20) + 'px';
+    file.style.zIndex = 40;
+    
+    // Tracker Upgrade Synergy: highlights the real files!
+    const isTracked = window.hasTrackerUpgrade;
+    file.innerHTML = `
+      <div style="font-size:26px; ${isTracked ? 'filter: drop-shadow(0 0 8px red);' : ''}">📦</div>
+      <span style="font-size:10px; font-weight:bold; color:#ffdd44; text-shadow:1px 1px 2px #000;">infected_${id}.rar</span>
+    `;
+
+    file.onclick = () => {
+      file.remove();
+      this.deleteFile(0);
+    };
+
+    document.getElementById('desktop').appendChild(file);
+  },
+
+  removeScrambleFiles() {
+    document.querySelectorAll('.scramble-file').forEach(el => el.remove());
+  },
+
   stopLoserar() {
     clearInterval(this.loserarInterval);
     clearInterval(this.loserarTuneInterval);
     this.loserarInterval = null;
     this.loserarTuneInterval = null;
     this.loserarFiles = 0;
+    this.removeScrambleFiles();
   },
 
   updateLoserarFolderView() {
@@ -182,6 +266,7 @@ const Threats = {
     this.loserarFiles = 0;
     playSynthBeep(200, 'sawtooth', 0.2);
     this.updateLoserarFolderView();
+    this.removeScrambleFiles();
   },
 
   // ==========================================
@@ -222,7 +307,6 @@ const Threats = {
   // 4. ALLSEEINGEYE.EXE (Client-Sided Freeze)
   // ==========================================
   triggerAllSeeingEye(curseVoided = false) {
-    // MUST BE IN ACTIVE SHIFT!
     if (!inShift || isGameOver || document.getElementById('eye-warning-banner')) return;
 
     const desktop = document.getElementById('desktop');
@@ -285,6 +369,7 @@ const Threats = {
   }
 };
 
+// Open Loserar Folder UI (Draggable!)
 function openLoserarFolder() {
   let win = document.getElementById('loserar-window');
   if (!win) {
@@ -308,6 +393,7 @@ function openLoserarFolder() {
       </div>
     `;
     document.getElementById('windows-container').appendChild(win);
+    makeWindowDraggable(win); // DRAGGABLE!
   }
   Threats.updateLoserarFolderView();
 }
