@@ -1,7 +1,21 @@
-* { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma', sans-serif; }
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
 
-/* Desktop Container */
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Tahoma', 'Segoe UI', sans-serif;
+  background: #000;
+}
+
+/* ============================================================
+   1. FULL-SCREEN WINDOWS XP DESKTOP
+============================================================ */
 #desktop {
   position: absolute;
   inset: 0;
@@ -11,7 +25,7 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma',
   overflow: hidden;
 }
 
-/* Dedicated Clean Title Screen (Opaque) */
+/* Dedicated Clean Title Screen (Opaque Bliss) */
 .title-screen {
   position: absolute;
   inset: 0;
@@ -25,17 +39,153 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma',
   z-index: 99999;
 }
 
-/* Icons */
-.desktop-icons { position: absolute; top: 15px; left: 15px; display: flex; flex-direction: column; gap: 20px; z-index: 10; }
-.icon { display: flex; flex-direction: column; align-items: center; width: 75px; color: white; font-size: 11px; text-shadow: 1px 1px 2px #000; cursor: pointer; }
-.icon-img { font-size: 36px; margin-bottom: 4px; }
-.drag-over { background: rgba(255, 0, 0, 0.4); border-radius: 4px; }
+.game-logo {
+  font-size: 56px;
+  color: #fff;
+  font-weight: 900;
+  text-shadow: 0 4px 14px rgba(0, 0, 0, 0.85);
+  margin-bottom: 45px;
+  letter-spacing: 3px;
+}
 
-/* In-Game Input */
-.xp-input { background: #fff; border: 2px inset #7f9db9; padding: 4px 8px; font-family: Tahoma; font-size: 12px; outline: none; }
-.xp-input:focus { border-color: #0055ea; }
+.menu-buttons {
+  display: flex;
+  gap: 40px;
+}
 
-/* Overlays */
+/* Hand-Drawn Art Buttons (LOGiN & ROOMS) */
+.retro-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.12s ease-out;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.retro-btn:hover {
+  transform: scale(1.08);
+}
+.retro-btn:active {
+  transform: scale(0.96);
+}
+.retro-btn img {
+  max-height: 90px;
+  max-width: 230px;
+  display: block;
+  filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.45));
+}
+
+/* ============================================================
+   2. DESKTOP ICONS
+============================================================ */
+.desktop-icons {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  z-index: 10;
+}
+
+.icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 75px;
+  color: white;
+  font-size: 11px;
+  text-shadow: 1px 1px 2px #000;
+  cursor: pointer;
+}
+.icon:hover {
+  filter: brightness(1.15);
+}
+.icon-img {
+  font-size: 36px;
+  margin-bottom: 4px;
+}
+.drag-over {
+  background: rgba(255, 0, 0, 0.4);
+  border-radius: 4px;
+}
+
+/* ============================================================
+   3. WINDOWS XP BASE WINDOWS & DIALOGS
+============================================================ */
+.window {
+  position: absolute;
+  background: #ece9d8;
+  border: 3px solid #0055ea;
+  border-radius: 5px 5px 0 0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  z-index: 50;
+}
+
+.window-titlebar {
+  background: linear-gradient(180deg, #0058e8 0%, #3a93ff 8%, #0054e3 90%, #002b8a 100%);
+  color: white;
+  font-weight: bold;
+  padding: 5px 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  cursor: move; /* Indicates draggable window */
+}
+
+.close-x {
+  background: #d93829;
+  color: white;
+  border: 1px solid #fff;
+  border-radius: 3px;
+  width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  cursor: pointer;
+}
+.close-x:hover {
+  background: #ff5242;
+}
+
+/* Classic Windows XP Inset Text Input */
+.xp-input {
+  background: #fff;
+  border: 2px inset #7f9db9;
+  padding: 4px 8px;
+  font-family: Tahoma;
+  font-size: 12px;
+  outline: none;
+}
+.xp-input:focus {
+  border-color: #0055ea;
+}
+
+/* Classic Windows XP Gray Beveled Button */
+.xp-dialog-btn {
+  padding: 5px 14px;
+  background: #ece9d8;
+  border: 1px solid #003c74;
+  border-radius: 3px;
+  font-family: Tahoma;
+  font-size: 11px;
+  cursor: pointer;
+  box-shadow: inset 1px 1px 0 #fff, inset -1px -1px 0 #808080;
+}
+.xp-dialog-btn:hover {
+  background: #e0eafc;
+}
+.xp-dialog-btn:active {
+  box-shadow: inset -1px -1px 0 #fff, inset 1px 1px 0 #808080;
+}
+
+/* ============================================================
+   4. MODALS & OVERLAYS
+============================================================ */
 .menu-overlay {
   position: absolute;
   inset: 0;
@@ -47,21 +197,37 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma',
   justify-content: center;
   z-index: 90000;
 }
-.game-logo { font-size: 52px; color: #fff; font-weight: 900; text-shadow: 0 4px 12px rgba(0,0,0,0.8); margin-bottom: 40px; letter-spacing: 3px; }
-.menu-buttons { display: flex; gap: 40px; }
 
-.retro-btn {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: transform 0.1s;
+/* Rooms List Box */
+.room-box {
+  background: #fff;
+  border: 1px solid #7f9db9;
+  height: 120px;
+  overflow-y: auto;
 }
-.retro-btn:hover { transform: scale(1.08); }
-.retro-btn:active { transform: scale(0.96); }
-.retro-btn img { max-height: 85px; max-width: 220px; display: block; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.4)); }
+.room-row {
+  padding: 8px 10px;
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  font-size: 11px;
+}
+.room-row:hover {
+  background: #316ac5;
+  color: white;
+}
 
-/* Draft Cards (Pick 1 of 3) */
-.draft-cards-container { display: flex; gap: 14px; justify-content: center; margin-top: 10px; }
+/* ============================================================
+   5. INTERMISSION BREAKROOM & DRAFT CARDS (Pick 1 of 3)
+============================================================ */
+.draft-cards-container {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  margin-top: 10px;
+}
+
 .draft-card {
   flex: 1;
   background: #fff;
@@ -72,55 +238,219 @@ html, body { width: 100%; height: 100%; overflow: hidden; font-family: 'Tahoma',
   flex-direction: column;
   justify-content: space-between;
   cursor: pointer;
+  transition: transform 0.12s ease-out, border-color 0.12s;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+.draft-card:hover {
+  transform: translateY(-4px);
+  border-color: #ff9900;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+.draft-card h4 {
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+.draft-card p {
+  font-size: 11px;
+  color: #555;
+  line-height: 1.35;
+  margin-bottom: 10px;
+}
+.card-upgrade {
+  border-color: #27d927;
+}
+.card-curse {
+  border-color: #d92727;
+}
+.card-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #fff;
+  border-radius: 3px;
+  margin-bottom: 6px;
+}
+.badge-up {
+  background: #199419;
+}
+.badge-down {
+  background: #b81414;
+}
+
+/* ============================================================
+   6. SCRAMBLE CURSE DESKTOP CLUTTER (40+ Files)
+============================================================ */
+.scramble-file {
+  position: absolute;
+  width: 75px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  cursor: pointer;
+  z-index: 25;
   transition: transform 0.1s;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
-.draft-card:hover { transform: translateY(-4px); border-color: #ff9900; }
-.draft-card h4 { font-size: 13px; margin-bottom: 6px; }
-.draft-card p { font-size: 11px; color: #555; line-height: 1.3; margin-bottom: 10px; }
-.card-upgrade { border-color: #27d927; }
-.card-curse { border-color: #d92727; }
-.card-badge { display: inline-block; padding: 2px 6px; font-size: 9px; font-weight: bold; color: #fff; border-radius: 3px; margin-bottom: 6px; }
-.badge-up { background: #199419; }
-.badge-down { background: #b81414; }
+.scramble-file:hover {
+  transform: scale(1.18);
+}
+.decoy-file {
+  opacity: 0.85;
+}
+.real-rar-file {
+  animation: pulseRar 1.5s infinite;
+}
+@keyframes pulseRar {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
 
-/* Rooms List Box */
-.room-box { background: #fff; border: 1px solid #7f9db9; height: 120px; overflow-y: auto; }
-.room-row { padding: 8px 10px; display: flex; justify-content: space-between; border-bottom: 1px solid #eee; cursor: pointer; font-size: 11px; }
-.room-row:hover { background: #316ac5; color: white; }
-.xp-dialog-btn { padding: 5px 12px; background: #ece9d8; border: 1px solid #003c74; border-radius: 3px; font-size: 11px; cursor: pointer; }
-.xp-dialog-btn:hover { background: #e0eafc; }
-
-/* Taskbar */
+/* ============================================================
+   7. WINDOWS XP TASKBAR & TRAY
+============================================================ */
 #taskbar {
-  position: absolute; bottom: 0; left: 0; width: 100%; height: 38px;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 38px;
   background: linear-gradient(180deg, #245edb 0%, #1941a5 10%, #1f52cf 90%, #16388e 100%);
-  display: flex; align-items: center; justify-content: space-between; z-index: 10000; border-top: 1px solid #4a8bf5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 10000;
+  border-top: 1px solid #4a8bf5;
 }
+
 #start-button {
   background: linear-gradient(180deg, #388a38 0%, #2f6b1e 50%, #205012 100%);
-  color: white; font-weight: bold; font-style: italic; font-size: 14px; height: 100%; padding: 0 16px; border: none; border-top-right-radius: 12px; border-bottom-right-radius: 12px; cursor: pointer;
+  color: white;
+  font-weight: bold;
+  font-style: italic;
+  font-size: 14px;
+  height: 100%;
+  padding: 0 16px;
+  border: none;
+  border-top-right-radius: 12px;
+  border-bottom-right-radius: 12px;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
 }
-.taskbar-tray { display: flex; align-items: center; gap: 14px; padding: 0 15px; color: white; font-size: 11px; background: #0f3ba2; height: 100%; border-left: 1px solid #1c4bc2; }
-.meter-bar { width: 100px; height: 12px; background: #06183e; border: 1px solid #5a8fed; display: inline-block; overflow: hidden; vertical-align: middle; }
-#cpu-fill { width: 15%; height: 100%; background: #27d927; transition: width 0.2s; }
+#start-button:hover {
+  filter: brightness(1.1);
+}
 
-/* Windows */
-.window { position: absolute; background: #ece9d8; border: 3px solid #0055ea; border-radius: 5px 5px 0 0; box-shadow: 0 8px 24px rgba(0,0,0,0.4); z-index: 50; }
-.window-titlebar { background: linear-gradient(180deg, #0058e8 0%, #002b8a 100%); color: white; font-weight: bold; padding: 4px 8px; display: flex; justify-content: space-between; align-items: center; font-size: 11px; }
-.close-x { background: #d93829; color: white; border: 1px solid #fff; border-radius: 3px; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
-.close-x:hover { background: #ff5242; }
+.taskbar-tray {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 15px;
+  color: white;
+  font-size: 11px;
+  background: #0f3ba2;
+  height: 100%;
+  border-left: 1px solid #1c4bc2;
+}
 
-/* Volume */
-.volume-container { position: relative; cursor: pointer; }
-#volume-popup { position: absolute; bottom: 35px; left: -10px; background: #ece9d8; border: 1px solid #7f9db9; padding: 10px; border-radius: 4px; box-shadow: 0 4px 10px rgba(0,0,0,0.4); }
+.meter-bar {
+  width: 100px;
+  height: 12px;
+  background: #06183e;
+  border: 1px solid #5a8fed;
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: middle;
+}
+#cpu-fill {
+  width: 15%;
+  height: 100%;
+  background: #27d927;
+  transition: width 0.2s, background-color 0.2s;
+}
 
-/* Remote Cursors */
-.remote-cursor { position: absolute; pointer-events: none; z-index: 4000; transition: transform 0.08s ease-out; }
-.cursor-arrow { width: 0; height: 0; border-left: 12px solid #00ff66; border-bottom: 12px solid transparent; border-right: 6px solid transparent; }
-.cursor-tag { position: absolute; top: 14px; left: 10px; background: #00ff66; color: #003311; font-size: 10px; font-weight: bold; padding: 2px 5px; border-radius: 3px; white-space: nowrap; }
+/* Volume Slider in Tray */
+.volume-container {
+  position: relative;
+  cursor: pointer;
+}
+#volume-popup {
+  position: absolute;
+  bottom: 35px;
+  left: -10px;
+  background: #ece9d8;
+  border: 1px solid #7f9db9;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
 
-/* BSOD */
-#bsod { display: none; position: fixed; inset: 0; width: 100vw; height: 100vh; background: #0000aa; color: #fff; font-family: 'Courier New', monospace; padding: 60px; z-index: 999999; }
-.bsod-title { background: #aaa; color: #0000aa; display: inline-block; padding: 2px 10px; font-size: 18px; margin-bottom: 20px; }
-.reboot-btn { margin-top: 30px; padding: 10px 20px; font-weight: bold; cursor: pointer; font-family: 'Courier New', monospace; background: #fff; color: #0000aa; border: none; }
+/* ============================================================
+   8. MULTIPLAYER REMOTE CURSORS
+============================================================ */
+.remote-cursor {
+  position: absolute;
+  pointer-events: none;
+  z-index: 4000;
+  transition: transform 0.08s ease-out;
+}
+.cursor-arrow {
+  width: 0;
+  height: 0;
+  border-left: 12px solid #00ff66;
+  border-bottom: 12px solid transparent;
+  border-right: 6px solid transparent;
+  filter: drop-shadow(1px 2px 2px rgba(0, 0, 0, 0.5));
+}
+.cursor-tag {
+  position: absolute;
+  top: 14px;
+  left: 10px;
+  background: #00ff66;
+  color: #003311;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   9. FULL-SCREEN BLUE SCREEN OF DEATH (BSOD)
+============================================================ */
+#bsod {
+  display: none;
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: #0000aa;
+  color: #fff;
+  font-family: 'Courier New', monospace;
+  padding: 60px;
+  z-index: 999999;
+}
+
+.bsod-title {
+  background: #aaa;
+  color: #0000aa;
+  display: inline-block;
+  padding: 2px 10px;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.reboot-btn {
+  margin-top: 30px;
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Courier New', monospace;
+  background: #fff;
+  color: #0000aa;
+  border: none;
+}
+.reboot-btn:hover {
+  background: #eee;
+}
