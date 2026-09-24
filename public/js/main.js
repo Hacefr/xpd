@@ -19,10 +19,11 @@ let overtimeHours = 0;
 let teamBank = 0;
 let cpuUsage = 15;
 let isGameOver = false;
-let inShift = false; // Strictly controls whether game is live!
+let inShift = false;
 
 let hasWindowsDefender = false;
 let currentShields = 0;
+window.hasTrackerUpgrade = false;
 
 let clockInterval = null;
 let threatInterval = null;
@@ -42,9 +43,9 @@ const cpuFill = document.getElementById('cpu-fill');
 const cpuText = document.getElementById('cpu-text');
 const teamBankElem = document.getElementById('team-bank');
 
-// START SHIFT
+// START SHIFT (Synchronized)
 function startShift() {
-  inShift = true; // Game officially live!
+  inShift = true;
   currentHour = 7;
   isPM = true;
   isOvertime = false;
@@ -53,6 +54,7 @@ function startShift() {
   clockoutBtn.style.background = '#ece9d8';
   shiftStatus.innerText = `Shift ${currentShift} in progress (7 PM - 1 AM)`;
   clockDisplay.innerText = "7:00 PM";
+  cpuUsage = 15;
 
   if (hasWindowsDefender) {
     currentShields = 1;
@@ -71,7 +73,7 @@ function startShift() {
       isOvertime = true;
       clockoutBtn.disabled = false;
       clockoutBtn.style.background = '#27d927';
-      shiftStatus.innerText = `Shift ${currentShift} complete! OVERTIME ACTIVE (+$20/hr)!`;
+      shiftStatus.innerText = `Shift ${currentShift} complete! OVERTIME (+$20/hr)!`;
     }
 
     if (isOvertime) {
@@ -83,7 +85,7 @@ function startShift() {
     clockDisplay.innerText = `${currentHour}:00 ${isPM ? 'PM' : 'AM'}`;
   }, 12000);
 
-  // THREATS ESCALATION
+  // Threats Escalation
   clearInterval(threatInterval);
 
   if (currentShift >= 2) Threats.startLoserar(activeCurses.scramble);
@@ -100,7 +102,7 @@ function startShift() {
   }, 11000);
 }
 
-// CPU TICK (Only ticks when in active shift!)
+// CPU TICK
 clearInterval(cpuInterval);
 cpuInterval = setInterval(() => {
   if (!inShift || isGameOver) return;
@@ -109,11 +111,12 @@ cpuInterval = setInterval(() => {
   cpuText.innerText = Math.floor(cpuUsage) + '%';
 
   if (cpuUsage >= 100) {
-    triggerBSOD("CPU usage reached 100%. Hardware overheated.");
+    // Notify server of hardware blowout
+    socket.emit('hardware-failure', "CPU usage reached 100%. Hardware overheated.");
   }
 }, 300);
 
-// SHIELD LOGIC
+// SHIELD & ELIMINATION
 function updateShieldUI() {
   let badge = document.getElementById('shield-status-badge');
   if (!badge) {
@@ -150,84 +153,76 @@ function eliminatePlayer(reason) {
     return;
   }
 
-  if (window.isSoloMode) {
-    triggerBSOD(reason);
-  } else {
-    playSynthBeep(120, 'sawtooth', 0.5);
-    const overlay = document.createElement('div');
-    overlay.className = 'menu-overlay';
-    overlay.style.background = 'rgba(0,0,0,0.7)';
-    overlay.innerHTML = `<h2 style="color:red;">ELIMINATED: ${reason}</h2><p style="color:white; margin-top:8px;">You are spectating your team.</p>`;
-    document.getElementById('desktop').appendChild(overlay);
-  }
+  // Tell server we were eliminated!
+  socket.emit('player-eliminated', reason);
 }
 
 // CONTACTS
-function openContactsApp() { document.getElementById('contacts-window').style.display = 'block'; }
-function closeContactsApp() { document.getElementById('contacts-window').style.display = 'none'; }
-
-// CLOCK OUT -> COMPLETE SHUTDOWN OF THREATS FOR INTERMISSION
-function clockOutShift() {
-  inShift = false; // Strictly sets shift to OFF
-  clearInterval(clockInterval);
-  clearInterval(threatInterval);
-  Threats.resetAll(); // Instantly freezes & purges every threat, sound, and popup!
-
-  closeContactsApp();
-
-  const basePay = 100;
-  const otPay = overtimeHours * 20;
-  teamBank += basePay;
-  teamBankElem.innerText = teamBank;
-
-  showIntermission(basePay, otPay);
+function openContactsApp() {
+  const win = document.getElementById('contacts-window');
+  win.style.display = 'block';
+  makeWindowDraggable(win);
+}
+function closeContactsApp() {
+  document.getElementById('contacts-window').style.display = 'none';
 }
 
-// INTERMISSION DRAFT
-const DRAFT_POOL = [
-  { type: 'upgrade', title: '🛡️ Windows Defender', desc: 'Permanent safety shield against 1 fatal mistake every shift!', effect: () => { hasWindowsDefender = true; } },
-  { type: 'upgrade', title: '💾 +512MB RAM', desc: 'Increases CPU headroom. CPU fills 20% slower.', effect: () => { cpuUsage = Math.max(5, cpuUsage - 20); } },
-  { type: 'curse', title: '💀 ERR: Broken Script', desc: 'Numbers are invisible! Rely on audio clicks (+ $150 Cash).', effect: () => { activeCurses.brokenScript = true; teamBank += 150; } },
-  { type: 'curse', title: '💀 Loserar: Scramble', desc: 'Files spread across folders & desktop (+ $120 Cash).', effect: () => { activeCurses.scramble = true; teamBank += 120; } },
-  { type: 'curse', title: '💀 QUIET!: MEDIUM', desc: 'Volume cannot drop below 40% or reach 100% (+ $140 Cash).', effect: () => { activeCurses.medium = true; teamBank += 140; } }
-];
+// CLOCK OUT -> Tell server to lock in safety and spectate!
+function clockOutShift() {
+  closeContactsApp();
+  socket.emit('player-clock-out');
+}
 
-function showIntermission(basePay, otPay) {
-  document.getElementById('intermission-title').innerText = `SHIFT ${currentShift} CLEARED!`;
-  document.getElementById('intermission-summary').innerText = `Base Pay: $${basePay} | Overtime: $${otPay} | Total Team Bank: $${teamBank}`;
-
-  const shuffled = [...DRAFT_POOL].sort(() => 0.5 - Math.random());
-  const choices = shuffled.slice(0, 3);
+// INTERMISSION UI & MAJORITY VOTING
+function showIntermissionUI(shift, bank, draftCards, saveNote) {
+  document.getElementById('intermission-title').innerText = `SHIFT ${shift} CLEARED!`;
+  document.getElementById('intermission-summary').innerHTML = `
+    ${saveNote ? `<p style="color:#27d927; font-weight:bold; margin-bottom:6px;">${saveNote}</p>` : ''}
+    Total Team Bank: $${bank}
+  `;
 
   const container = document.getElementById('draft-container');
   container.innerHTML = '';
 
-  choices.forEach(card => {
+  draftCards.forEach((card, index) => {
     const el = document.createElement('div');
     el.className = `draft-card ${card.type === 'upgrade' ? 'card-upgrade' : 'card-curse'}`;
+    el.id = 'draft-card-' + index;
     el.innerHTML = `
       <div>
         <span class="card-badge ${card.type === 'upgrade' ? 'badge-up' : 'badge-down'}">${card.type.toUpperCase()}</span>
         <h4>${card.title}</h4>
         <p>${card.desc}</p>
       </div>
-      <button class="xp-dialog-btn" style="width:100%; font-weight:bold;">SELECT</button>
+      <div>
+        <div id="vote-count-${index}" style="font-size:11px; font-weight:bold; color:#0055ea; margin-bottom:4px;">Votes: 0</div>
+        <button class="xp-dialog-btn" style="width:100%; font-weight:bold;" onclick="voteForDraftCard(${index})">VOTE</button>
+      </div>
     `;
-    el.onclick = () => selectDraftCard(card);
     container.appendChild(el);
   });
 
   document.getElementById('intermission-modal').style.display = 'flex';
 }
 
-function selectDraftCard(card) {
-  card.effect();
-  teamBankElem.innerText = teamBank;
-  document.getElementById('intermission-modal').style.display = 'none';
+function voteForDraftCard(cardIndex) {
+  playSynthBeep(500, 'sine', 0.1);
+  socket.emit('cast-draft-vote', cardIndex);
+}
 
-  currentShift++;
-  cpuUsage = 15;
-  startShift(); // Clean start for next shift
+function updateVoteBadges(votes) {
+  for (let i = 0; i < 3; i++) {
+    const elem = document.getElementById('vote-count-' + i);
+    if (elem) elem.innerText = `Votes: ${votes[i] || 0}`;
+  }
+}
+
+function applyUpgradeEffect(card) {
+  if (card.id === 'defender') hasWindowsDefender = true;
+  if (card.id === 'tracker') window.hasTrackerUpgrade = true;
+  if (card.id === 'err_curse') activeCurses.brokenScript = true;
+  if (card.id === 'loserar_curse') activeCurses.scramble = true;
+  if (card.id === 'quiet_curse') activeCurses.medium = true;
 }
 
 // BSOD
