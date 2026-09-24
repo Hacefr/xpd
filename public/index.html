@@ -44,7 +44,7 @@
       </div>
     </div>
 
-    <!-- CLEAN TITLE SCREEN (Opaque Bliss Background) -->
+    <!-- CLEAN TITLE SCREEN (Opaque Bliss) -->
     <div id="main-menu" class="title-screen">
       <h1 class="game-logo">XP DEFENDER</h1>
       <div class="menu-buttons">
@@ -60,33 +60,30 @@
       </div>
     </div>
 
-    <!-- ROOM SELECTION MODAL -->
+    <!-- DYNAMIC ROOM SELECTION MODAL (Real-time Live Server List) -->
     <div id="rooms-modal" class="menu-overlay" style="display:none;">
-      <div class="window" style="width: 480px; position: relative;">
+      <div class="window" style="width: 500px; position: relative;">
         <div class="window-titlebar">
-          <span>Network Neighborhood - Join Workstation</span>
+          <span>Network Neighborhood - Active Workstations</span>
           <div class="close-x" onclick="closeRoomsLobby()">✕</div>
         </div>
         <div class="window-body" style="padding: 15px; background: #ece9d8;">
-          <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
-            <label style="font-size: 11px; font-weight: bold;">Your Name:</label>
-            <input type="text" id="player-name-input" class="xp-input" value="Agent_XP" maxlength="15">
+          <div style="margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <label style="font-size: 11px; font-weight: bold;">Your Name:</label>
+              <input type="text" id="player-name-input" class="xp-input" value="Agent_XP" maxlength="15">
+            </div>
+            <button class="xp-dialog-btn" onclick="socket.emit('request-rooms')">🔄 Refresh</button>
           </div>
 
-          <p style="font-size: 11px; margin-bottom: 6px; font-weight: bold;">Select a Public Room:</p>
-          <div class="room-box">
-            <div class="room-row" onclick="joinSpecificRoom('Workstation_Alpha')">
-              <span>🖥️ Workstation_Alpha</span>
-              <span style="color:#006600; font-weight: bold;">[Join]</span>
-            </div>
-            <div class="room-row" onclick="joinSpecificRoom('IT_Graveyard_Shift')">
-              <span>💾 IT_Graveyard_Shift</span>
-              <span style="color:#006600; font-weight: bold;">[Join]</span>
-            </div>
+          <p style="font-size: 11px; margin-bottom: 6px; font-weight: bold;">Live Workstations on Network:</p>
+          <!-- Live Dynamically Populated Rooms Container -->
+          <div class="room-box" id="dynamic-room-list">
+            <p style="color: gray; padding: 10px; font-size: 11px;">Scanning network for active workstations...</p>
           </div>
 
           <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #c0c0c0; display: flex; gap: 8px;">
-            <input type="text" id="custom-room-input" class="xp-input" placeholder="New Room Name..." style="flex: 1;">
+            <input type="text" id="custom-room-input" class="xp-input" placeholder="New Workstation Name..." style="flex: 1;">
             <button class="xp-dialog-btn" onclick="submitCustomRoom()">Host Room</button>
             <button class="xp-dialog-btn" onclick="closeRoomsLobby()">Cancel</button>
           </div>
@@ -102,13 +99,11 @@
         </div>
         <div class="window-body" style="padding: 15px; background: #ece9d8;">
           <div style="display: flex; gap: 15px;">
-            <!-- Player List -->
             <div style="width: 160px; background: #fff; border: 1px solid #7f9db9; padding: 8px; height: 160px; overflow-y: auto;">
               <p style="font-size: 10px; font-weight: bold; margin-bottom: 6px; color:#555;">CONNECTED AGENTS:</p>
               <div id="lobby-player-list" style="font-size: 11px; line-height: 1.6;"></div>
             </div>
 
-            <!-- Chat Area -->
             <div style="flex: 1; display: flex; flex-direction: column;">
               <div id="lobby-chat-box" style="flex: 1; background: #fff; border: 1px solid #7f9db9; padding: 8px; height: 120px; overflow-y: auto; font-size: 11px; margin-bottom: 6px;">
                 <p style="color: gray;"><i>Joined lobby. Waiting for team...</i></p>
@@ -121,14 +116,14 @@
           </div>
 
           <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
-            <span style="font-size: 11px; color:#333;">All players ready?</span>
+            <span style="font-size: 11px; color:#333;">Ready to clock in?</span>
             <button class="xp-dialog-btn" style="background: #27d927; font-weight: bold; padding: 6px 20px;" onclick="triggerStartShift()">▶ START SHIFT</button>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- INTERMISSION MODAL (Pick 1 of 3) -->
+    <!-- INTERMISSION BREAKROOM -->
     <div id="intermission-modal" class="menu-overlay" style="display:none;">
       <div class="window" style="width: 620px; position: relative;">
         <div class="window-titlebar">
@@ -145,7 +140,7 @@
       </div>
     </div>
 
-    <!-- Taskbar (Hidden while on main menu) -->
+    <!-- Windows XP Taskbar -->
     <div id="taskbar" style="display:none;">
       <button id="start-button">❖ start</button>
       <div class="taskbar-tray">
