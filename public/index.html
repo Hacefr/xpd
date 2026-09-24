@@ -12,8 +12,8 @@
   <!-- Full-Screen Windows XP Desktop -->
   <div id="desktop">
 
-    <!-- Desktop Icons -->
-    <div class="desktop-icons">
+    <!-- Desktop Icons (Hidden while on main menu) -->
+    <div id="desktop-icons" class="desktop-icons" style="display:none;">
       <div id="recycle-bin" class="icon">
         <div class="icon-img">🗑️</div>
         <span>Recycle Bin</span>
@@ -30,8 +30,6 @@
 
     <!-- Active Windows Container -->
     <div id="windows-container"></div>
-
-    <!-- Remotely Connected Cursors Container -->
     <div id="remote-cursors"></div>
 
     <!-- Contacts / Clock-Out Window -->
@@ -46,8 +44,8 @@
       </div>
     </div>
 
-    <!-- MAIN MENU OVERLAY -->
-    <div id="main-menu" class="menu-overlay">
+    <!-- CLEAN TITLE SCREEN (Opaque Bliss Background) -->
+    <div id="main-menu" class="title-screen">
       <h1 class="game-logo">XP DEFENDER</h1>
       <div class="menu-buttons">
         <button class="retro-btn" onclick="startSoloGame()">
@@ -62,11 +60,11 @@
       </div>
     </div>
 
-    <!-- ROOMS / LOBBY WINDOW -->
+    <!-- ROOM SELECTION MODAL -->
     <div id="rooms-modal" class="menu-overlay" style="display:none;">
       <div class="window" style="width: 480px; position: relative;">
         <div class="window-titlebar">
-          <span>Network Neighborhood - Join or Host Workstation</span>
+          <span>Network Neighborhood - Join Workstation</span>
           <div class="close-x" onclick="closeRoomsLobby()">✕</div>
         </div>
         <div class="window-body" style="padding: 15px; background: #ece9d8;">
@@ -79,11 +77,11 @@
           <div class="room-box">
             <div class="room-row" onclick="joinSpecificRoom('Workstation_Alpha')">
               <span>🖥️ Workstation_Alpha</span>
-              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
+              <span style="color:#006600; font-weight: bold;">[Join]</span>
             </div>
             <div class="room-row" onclick="joinSpecificRoom('IT_Graveyard_Shift')">
               <span>💾 IT_Graveyard_Shift</span>
-              <span style="color:#006600; font-weight: bold;">[Join Room]</span>
+              <span style="color:#006600; font-weight: bold;">[Join]</span>
             </div>
           </div>
 
@@ -96,7 +94,41 @@
       </div>
     </div>
 
-    <!-- IN-GAME INTERMISSION SCREEN (Pick 1 of 3 Draft) -->
+    <!-- MULTIPLAYER WAITING LOBBY (MSN Messenger Style) -->
+    <div id="multiplayer-lobby" class="menu-overlay" style="display:none;">
+      <div class="window" style="width: 520px; position: relative;">
+        <div class="window-titlebar">
+          <span id="lobby-titlebar">💬 MSN Messenger - Workstation Lobby</span>
+        </div>
+        <div class="window-body" style="padding: 15px; background: #ece9d8;">
+          <div style="display: flex; gap: 15px;">
+            <!-- Player List -->
+            <div style="width: 160px; background: #fff; border: 1px solid #7f9db9; padding: 8px; height: 160px; overflow-y: auto;">
+              <p style="font-size: 10px; font-weight: bold; margin-bottom: 6px; color:#555;">CONNECTED AGENTS:</p>
+              <div id="lobby-player-list" style="font-size: 11px; line-height: 1.6;"></div>
+            </div>
+
+            <!-- Chat Area -->
+            <div style="flex: 1; display: flex; flex-direction: column;">
+              <div id="lobby-chat-box" style="flex: 1; background: #fff; border: 1px solid #7f9db9; padding: 8px; height: 120px; overflow-y: auto; font-size: 11px; margin-bottom: 6px;">
+                <p style="color: gray;"><i>Joined lobby. Waiting for team...</i></p>
+              </div>
+              <div style="display: flex; gap: 4px;">
+                <input type="text" id="lobby-chat-input" class="xp-input" placeholder="Type a message..." style="flex: 1;" onkeydown="if(event.key==='Enter') sendLobbyChat()">
+                <button class="xp-dialog-btn" onclick="sendLobbyChat()">Send</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 11px; color:#333;">All players ready?</span>
+            <button class="xp-dialog-btn" style="background: #27d927; font-weight: bold; padding: 6px 20px;" onclick="triggerStartShift()">▶ START SHIFT</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERMISSION MODAL (Pick 1 of 3) -->
     <div id="intermission-modal" class="menu-overlay" style="display:none;">
       <div class="window" style="width: 620px; position: relative;">
         <div class="window-titlebar">
@@ -107,19 +139,14 @@
           <p id="intermission-summary" style="font-size: 12px; color: #333; margin-bottom: 16px;">
             Earnings: $100 | Overtime: $0 | Total Team Bank: $100
           </p>
-          
           <p style="font-size: 12px; font-weight: bold; margin-bottom: 10px;">Select 1 Modification for the Next Shift:</p>
-          
-          <!-- 3 Draft Cards -->
-          <div class="draft-cards-container" id="draft-container">
-            <!-- Dynamically populated by main.js -->
-          </div>
+          <div class="draft-cards-container" id="draft-container"></div>
         </div>
       </div>
     </div>
 
-    <!-- Windows XP Taskbar -->
-    <div id="taskbar">
+    <!-- Taskbar (Hidden while on main menu) -->
+    <div id="taskbar" style="display:none;">
       <button id="start-button">❖ start</button>
       <div class="taskbar-tray">
         <div class="volume-container">
@@ -148,7 +175,6 @@
 
   </div>
 
-  <!-- Load Game Scripts -->
   <script src="js/threats.js"></script>
   <script src="js/network.js"></script>
   <script src="js/main.js"></script>
