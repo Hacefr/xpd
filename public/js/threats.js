@@ -19,7 +19,7 @@ function makeWindowDraggable(win) {
   window.addEventListener('mousemove', (e) => {
     if (!isDragging) return;
     const maxX = window.innerWidth - win.offsetWidth;
-    const maxY = window.innerHeight - win.offsetHeight - 40; // Avoid taskbar
+    const maxY = window.innerHeight - win.offsetHeight - 40;
     win.style.left = Math.max(0, Math.min(maxX, e.clientX - startX)) + 'px';
     win.style.top = Math.max(0, Math.min(maxY, e.clientY - startY)) + 'px';
   });
@@ -41,6 +41,7 @@ const Threats = {
   eyeTimeout1: null,
   eyeTimeout2: null,
   eyeFreezeChecker: null,
+  infectedFolderIndices: [],
 
   // MASTER RESET
   resetAll() {
@@ -53,8 +54,9 @@ const Threats = {
     this.loserarInterval = null;
     this.loserarTuneInterval = null;
     this.loserarFiles = 0;
+    this.infectedFolderIndices = [];
     this.updateLoserarFolderView();
-    this.removeScrambleFiles();
+    this.removeScrambleGrid();
 
     clearInterval(this.quietInterval);
     this.quietActive = false;
@@ -77,7 +79,7 @@ const Threats = {
   },
 
   // ==========================================
-  // 1. ERR (Client-Sided QTE - Draggable!)
+  // 1. ERR (Client-Sided QTE)
   // ==========================================
   spawnERR(curseBrokenScript = false) {
     if (!inShift || isGameOver || document.getElementById('err-window')) return;
@@ -106,7 +108,7 @@ const Threats = {
     `;
 
     document.getElementById('windows-container').appendChild(win);
-    makeWindowDraggable(win); // DRAGGABLE!
+    makeWindowDraggable(win);
 
     clearInterval(this.errInterval);
     this.errInterval = setInterval(() => {
@@ -142,15 +144,16 @@ const Threats = {
   },
 
   // ==========================================
-  // 2. LOSERAR (Folder Files + 40+ Scramble Curse!)
+  // 2. LOSERAR (Folder Files + GRID Scramble Curse!)
   // ==========================================
   startLoserar(scramble = false) {
     if (!inShift || isGameOver || this.loserarInterval) return;
     this.loserarFiles = 0;
+    this.infectedFolderIndices = [];
 
-    // SCRAMBLE CURSE: Floods 45+ decoy files across the entire desktop!
+    // SCRAMBLE CURSE: Floods the desktop with a neat GRID of duplicate folders!
     if (scramble) {
-      this.spawnScrambleFiles();
+      this.spawnScrambleGrid();
     }
 
     this.loserarInterval = setInterval(() => {
@@ -160,13 +163,20 @@ const Threats = {
       }
 
       this.loserarFiles++;
-      this.updateLoserarFolderView();
 
-      // If scramble is on, drop infected files on the desktop too!
+      // If scramble is active, hide the file inside a random grid folder!
       if (scramble) {
-        this.dropScrambleRealFile(this.loserarFiles);
+        const totalFolders = 36;
+        const randomTarget = Math.floor(Math.random() * totalFolders);
+        if (!this.infectedFolderIndices.includes(randomTarget)) {
+          this.infectedFolderIndices.push(randomTarget);
+        }
+        this.highlightTrackedFolders();
       }
 
+      this.updateLoserarFolderView();
+
+      // 3 files triggers the panic tune!
       if (this.loserarFiles >= 3 && !this.loserarTuneInterval) {
         let tuneNote = 0;
         const notes = [440, 554, 659, 880];
@@ -189,49 +199,98 @@ const Threats = {
     }, 7000);
   },
 
-  // 40+ Decoy Files Spawner
-  spawnScrambleFiles() {
-    this.removeScrambleFiles();
-    const decoys = ['my_song.mp3', 'taxes_2004.doc', 'family_photo.bmp', 'passwords.txt', 'notes.ini', 'receipt.pdf', 'setup.exe', 'cookie.tmp'];
-    
-    for (let i = 0; i < 45; i++) {
-      const file = document.createElement('div');
-      file.className = 'scramble-file decoy-file';
-      file.style.left = (Math.random() * (window.innerWidth - 120) + 20) + 'px';
-      file.style.top = (Math.random() * (window.innerHeight - 140) + 20) + 'px';
-      file.innerHTML = `📄 <span style="font-size:10px; color:white; text-shadow:1px 1px 2px #000;">${decoys[Math.floor(Math.random() * decoys.length)]}</span>`;
-      
-      // Decoys can be clicked to clear
-      file.onclick = () => file.remove();
-      document.getElementById('desktop').appendChild(file);
+  // Spawn Duplicates in a neat Desktop Grid
+  spawnScrambleGrid() {
+    this.removeScrambleGrid();
+    const container = document.createElement('div');
+    container.id = 'scramble-grid-container';
+    document.getElementById('desktop').appendChild(container);
+
+    const startX = 110;
+    const startY = 20;
+    const colSpacing = 85;
+    const rowSpacing = 85;
+
+    const cols = Math.floor((window.innerWidth - 140) / colSpacing);
+    const rows = Math.floor((window.innerHeight - 80) / rowSpacing);
+    const total = Math.min(36, cols * rows);
+
+    for (let i = 0; i < total; i++) {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+
+      const folder = document.createElement('div');
+      folder.className = 'grid-folder';
+      folder.id = 'grid-folder-' + i;
+      folder.style.left = (startX + col * colSpacing) + 'px';
+      folder.style.top = (startY + row * rowSpacing) + 'px';
+      folder.innerHTML = `
+        <div class="folder-icon-img">📁</div>
+        <span class="folder-name">Loserar_${i + 1}</span>
+      `;
+
+      folder.onclick = () => this.openGridFolder(i);
+      container.appendChild(folder);
     }
   },
 
-  dropScrambleRealFile(id) {
-    const file = document.createElement('div');
-    file.className = 'scramble-file real-rar-file';
-    file.id = 'scramble-real-' + id;
-    file.style.left = (Math.random() * (window.innerWidth - 120) + 20) + 'px';
-    file.style.top = (Math.random() * (window.innerHeight - 140) + 20) + 'px';
-    file.style.zIndex = 40;
-    
-    // Tracker Upgrade Synergy: highlights the real files!
-    const isTracked = window.hasTrackerUpgrade;
-    file.innerHTML = `
-      <div style="font-size:26px; ${isTracked ? 'filter: drop-shadow(0 0 8px red);' : ''}">📦</div>
-      <span style="font-size:10px; font-weight:bold; color:#ffdd44; text-shadow:1px 1px 2px #000;">infected_${id}.rar</span>
-    `;
-
-    file.onclick = () => {
-      file.remove();
-      this.deleteFile(0);
-    };
-
-    document.getElementById('desktop').appendChild(file);
+  highlightTrackedFolders() {
+    // If team has Tracker Upgrade, glowing red outline on infected folders!
+    if (!window.hasTrackerUpgrade) return;
+    this.infectedFolderIndices.forEach(idx => {
+      const el = document.getElementById('grid-folder-' + idx);
+      if (el) el.classList.add('tracked-folder');
+    });
   },
 
-  removeScrambleFiles() {
-    document.querySelectorAll('.scramble-file').forEach(el => el.remove());
+  openGridFolder(index) {
+    const isInfected = this.infectedFolderIndices.includes(index);
+    let win = document.getElementById('grid-window-' + index);
+    if (win) return;
+
+    win = document.createElement('div');
+    win.id = 'grid-window-' + index;
+    win.className = 'window';
+    win.style.width = '300px';
+    win.style.left = (150 + (index % 5) * 30) + 'px';
+    win.style.top = (100 + (index % 5) * 30) + 'px';
+    win.style.zIndex = ++window.highestZIndex;
+
+    win.innerHTML = `
+      <div class="window-titlebar">
+        <span>📁 Loserar_Temp (${index + 1})</span>
+        <div class="close-x" onclick="document.getElementById('grid-window-${index}').remove()">✕</div>
+      </div>
+      <div class="window-body" style="padding: 15px; background: #fff; text-align: center;">
+        ${isInfected ? `
+          <p style="color:red; font-size:12px; font-weight:bold; margin-bottom:10px;">⚠️ INFECTED FILE FOUND!</p>
+          <div style="padding:10px; border:1px dashed red; margin-bottom:10px;">📦 infected_${index + 1}.rar</div>
+          <button class="xp-dialog-btn" style="background:#ffcccc; font-weight:bold;" onclick="Threats.cleanGridFolder(${index})">Delete Virus File</button>
+        ` : `
+          <p style="color:gray; font-size:11px;">This folder is clean (0 files found).</p>
+        `}
+      </div>
+    `;
+
+    document.getElementById('windows-container').appendChild(win);
+    makeWindowDraggable(win);
+  },
+
+  cleanGridFolder(index) {
+    const win = document.getElementById('grid-window-' + index);
+    if (win) win.remove();
+
+    this.infectedFolderIndices = this.infectedFolderIndices.filter(i => i !== index);
+    const folderEl = document.getElementById('grid-folder-' + index);
+    if (folderEl) folderEl.classList.remove('tracked-folder');
+
+    this.loserarFiles = Math.max(0, this.loserarFiles - 1);
+    playSynthBeep(300, 'triangle', 0.15);
+  },
+
+  removeScrambleGrid() {
+    const el = document.getElementById('scramble-grid-container');
+    if (el) el.remove();
   },
 
   stopLoserar() {
@@ -240,7 +299,8 @@ const Threats = {
     this.loserarInterval = null;
     this.loserarTuneInterval = null;
     this.loserarFiles = 0;
-    this.removeScrambleFiles();
+    this.infectedFolderIndices = [];
+    this.removeScrambleGrid();
   },
 
   updateLoserarFolderView() {
@@ -264,9 +324,10 @@ const Threats = {
 
   deleteAllFiles() {
     this.loserarFiles = 0;
+    this.infectedFolderIndices = [];
     playSynthBeep(200, 'sawtooth', 0.2);
     this.updateLoserarFolderView();
-    this.removeScrambleFiles();
+    this.removeScrambleGrid();
   },
 
   // ==========================================
@@ -369,7 +430,7 @@ const Threats = {
   }
 };
 
-// Open Loserar Folder UI (Draggable!)
+// Open Loserar Folder UI (Draggable)
 function openLoserarFolder() {
   let win = document.getElementById('loserar-window');
   if (!win) {
@@ -393,7 +454,7 @@ function openLoserarFolder() {
       </div>
     `;
     document.getElementById('windows-container').appendChild(win);
-    makeWindowDraggable(win); // DRAGGABLE!
+    makeWindowDraggable(win);
   }
   Threats.updateLoserarFolderView();
 }
