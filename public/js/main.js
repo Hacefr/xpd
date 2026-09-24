@@ -12,7 +12,7 @@ function playSynthBeep(freq, type = 'sine', duration = 0.1) {
 
 // --- GAME STATE & STATS ---
 let currentShift = 1;
-let currentHour = 7; // 7 PM
+let currentHour = 7;
 let isPM = true;
 let isOvertime = false;
 let overtimeHours = 0;
@@ -20,6 +20,10 @@ let teamBank = 0;
 let cpuUsage = 15;
 let isGameOver = false;
 let inShift = false;
+
+// Windows Defender Shield Tracking
+let hasWindowsDefender = false; // Permanent unlock
+let currentShields = 0;         // 1 per round if unlocked
 
 // Intervals
 let clockInterval = null;
@@ -41,7 +45,9 @@ const cpuFill = document.getElementById('cpu-fill');
 const cpuText = document.getElementById('cpu-text');
 const teamBankElem = document.getElementById('team-bank');
 
-// START A SHIFT
+// ==========================================
+// START A SHIFT (Progression Director)
+// ==========================================
 function startShift() {
   inShift = true;
   currentHour = 7;
@@ -53,15 +59,21 @@ function startShift() {
   shiftStatus.innerText = `Shift ${currentShift} in progress (7 PM - 1 AM)`;
   clockDisplay.innerText = "7:00 PM";
 
-  // Clock ticks (1 hour = 12 seconds)
+  // Grant 1 Shield every round if Windows Defender is unlocked!
+  if (hasWindowsDefender) {
+    currentShields = 1;
+  }
+  updateShieldUI();
+
+  // Clock Ticks
   clearInterval(clockInterval);
   clockInterval = setInterval(() => {
     if (!inShift || isGameOver) return;
     currentHour++;
-    if (currentHour === 12) isPM = false; // Midnight
+    if (currentHour === 12) isPM = false;
     if (currentHour > 12) currentHour = 1;
 
-    // Hit 1:00 AM? Unlock Overtime & Contacts Clock-Out
+    // 1:00 AM -> Unlock Overtime
     if (currentHour === 1 && !isPM) {
       isOvertime = true;
       clockoutBtn.disabled = false;
@@ -78,19 +90,95 @@ function startShift() {
     clockDisplay.innerText = `${currentHour}:00 ${isPM ? 'PM' : 'AM'}`;
   }, 12000);
 
-  // RECURRING THREAT DIRECTOR (ERR attacks every 10-14 seconds!)
+  // ------------------------------------------
+  // ESCALATION DIRECTOR: Based on Shift Level!
+  // ------------------------------------------
   clearInterval(threatInterval);
+
+  // Shift 2+: Start Loserar (dumps files in folder)
+  if (currentShift >= 2) {
+    Threats.startLoserar(activeCurses.scramble);
+  }
+
+  // Shift 3+: Start QUIET! (volume creeping)
+  if (currentShift >= 3) {
+    Threats.startQuiet(activeCurses.medium);
+  }
+
+  // Recurring Attacks: ERR and ALLSEEINGEYE
   threatInterval = setInterval(() => {
     if (!inShift || isGameOver) return;
-    
-    // Check if an ERR popup already exists
-    if (!document.querySelector('#windows-container .window')) {
-      Threats.spawnERR(activeCurses.brokenScript);
+
+    // 50% chance of Eye if Shift 4+, otherwise ERR
+    if (currentShift >= 4 && Math.random() < 0.4) {
+      Threats.triggerAllSeeingEye(activeCurses.voided);
+    } else {
+      if (!document.getElementById('err-window')) {
+        Threats.spawnERR(activeCurses.brokenScript);
+      }
     }
   }, 11000);
 }
 
+// ==========================================
+// SHIELD & ELIMINATION LOGIC
+// ==========================================
+function updateShieldUI() {
+  let badge = document.getElementById('shield-status-badge');
+  if (!badge) {
+    badge = document.createElement('div');
+    badge.id = 'shield-status-badge';
+    badge.style.fontSize = '11px';
+    badge.style.fontWeight = 'bold';
+    badge.style.color = '#66ff66';
+    document.querySelector('.taskbar-tray').prepend(badge);
+  }
+  badge.innerText = currentShields > 0 ? "🛡️ SHIELD: READY" : (hasWindowsDefender ? "🛡️ SHIELD: BROKEN" : "");
+}
+
+// Eliminate Player (With Shield Check!)
+function eliminatePlayer(reason) {
+  // 1. Check if Windows Defender Shield saves you!
+  if (currentShields > 0) {
+    currentShields--;
+    updateShieldUI();
+    playSynthBeep(950, 'triangle', 0.4); // Shield block chime
+
+    // In-game OS alert banner
+    const alertBox = document.createElement('div');
+    alertBox.style.position = 'fixed';
+    alertBox.style.top = '60px';
+    alertBox.style.left = '50%';
+    alertBox.style.transform = 'translateX(-50%)';
+    alertBox.style.background = '#00aa00';
+    alertBox.style.color = '#fff';
+    alertBox.style.padding = '10px 20px';
+    alertBox.style.border = '2px solid #fff';
+    alertBox.style.fontWeight = 'bold';
+    alertBox.style.zIndex = '999999';
+    alertBox.innerText = `🛡️ THREAT BLOCKED BY WINDOWS DEFENDER! (${reason})`;
+    document.body.appendChild(alertBox);
+    setTimeout(() => alertBox.remove(), 3000);
+
+    return; // SAVED! Does not die!
+  }
+
+  // 2. If no shield: Trigger BSOD in Solo, or Spectator in Multiplayer
+  if (window.isSoloMode) {
+    triggerBSOD(reason);
+  } else {
+    playSynthBeep(120, 'sawtooth', 0.5);
+    const overlay = document.createElement('div');
+    overlay.className = 'menu-overlay';
+    overlay.style.background = 'rgba(0,0,0,0.7)';
+    overlay.innerHTML = `<h2 style="color:red;">ELIMINATED: ${reason}</h2><p style="color:white; margin-top:8px;">You are spectating your team.</p>`;
+    document.getElementById('desktop').appendChild(overlay);
+  }
+}
+
+// ==========================================
 // CPU TICK & BSOD CHECK
+// ==========================================
 clearInterval(cpuInterval);
 cpuInterval = setInterval(() => {
   if (!inShift || isGameOver) return;
@@ -111,40 +199,37 @@ function closeContactsApp() {
   document.getElementById('contacts-window').style.display = 'none';
 }
 
-// CLOCK OUT (Loads Intermission without reloading the website!)
+// CLOCK OUT
 function clockOutShift() {
   inShift = false;
   clearInterval(clockInterval);
   clearInterval(threatInterval);
+  Threats.stopLoserar();
 
-  // Close open popups
   document.getElementById('windows-container').innerHTML = '';
   closeContactsApp();
 
-  // Shift payout
   const basePay = 100;
   const otPay = overtimeHours * 20;
   teamBank += basePay;
   teamBankElem.innerText = teamBank;
 
-  // Show Intermission Window
   showIntermission(basePay, otPay);
 }
 
-// INTERMISSION DRAFT SYSTEM (Pick 1 of 3)
+// INTERMISSION DRAFT POOL
 const DRAFT_POOL = [
+  { type: 'upgrade', title: '🛡️ Windows Defender', desc: 'Permanent safety shield against 1 fatal mistake every shift!', effect: () => { hasWindowsDefender = true; } },
   { type: 'upgrade', title: '💾 +512MB RAM', desc: 'Increases CPU headroom. CPU fills 20% slower.', effect: () => { cpuUsage = Math.max(5, cpuUsage - 20); } },
-  { type: 'upgrade', title: '🖱️ Optical Sensor', desc: 'Cleans mouse ball. Cursor moves 30% faster and snappier.', effect: () => {} },
   { type: 'curse', title: '💀 ERR: Broken Script', desc: 'Numbers are invisible! Rely on audio clicks (+ $150 Cash).', effect: () => { activeCurses.brokenScript = true; teamBank += 150; } },
-  { type: 'upgrade', title: '🛡️ Windows Defender', desc: 'Permanent safety shield against 1 fatal mistake per shift!', effect: () => {} },
-  { type: 'curse', title: '💀 Loserar: Scramble', desc: 'Files spread across folders & desktop (+ $120 Cash).', effect: () => { activeCurses.scramble = true; teamBank += 120; } }
+  { type: 'curse', title: '💀 Loserar: Scramble', desc: 'Files spread across folders & desktop (+ $120 Cash).', effect: () => { activeCurses.scramble = true; teamBank += 120; } },
+  { type: 'curse', title: '💀 QUIET!: MEDIUM', desc: 'Volume cannot drop below 40% or reach 100% (+ $140 Cash).', effect: () => { activeCurses.medium = true; teamBank += 140; } }
 ];
 
 function showIntermission(basePay, otPay) {
   document.getElementById('intermission-title').innerText = `SHIFT ${currentShift} CLEARED!`;
   document.getElementById('intermission-summary').innerText = `Base Pay: $${basePay} | Overtime: $${otPay} | Total Team Bank: $${teamBank}`;
 
-  // Pick 3 random distinct options
   const shuffled = [...DRAFT_POOL].sort(() => 0.5 - Math.random());
   const choices = shuffled.slice(0, 3);
 
@@ -174,9 +259,8 @@ function selectDraftCard(card) {
   teamBankElem.innerText = teamBank;
   document.getElementById('intermission-modal').style.display = 'none';
 
-  // Advance to Next Shift!
   currentShift++;
-  cpuUsage = 15; // Reset CPU for clean start
+  cpuUsage = 15;
   startShift();
 }
 
@@ -186,26 +270,12 @@ function triggerBSOD(reason = "A fatal exception has occurred.") {
   inShift = false;
   clearInterval(clockInterval);
   clearInterval(threatInterval);
+  Threats.stopLoserar();
   playSynthBeep(80, 'sawtooth', 0.8);
   document.getElementById('bsod-reason').innerText = reason;
   document.getElementById('bsod').style.display = 'block';
 }
 
-// ELIMINATE PLAYER (Solo vs Multiplayer)
-function eliminatePlayer(reason) {
-  if (window.isSoloMode) {
-    triggerBSOD(reason);
-  } else {
-    playSynthBeep(120, 'sawtooth', 0.5);
-    const overlay = document.createElement('div');
-    overlay.className = 'menu-overlay';
-    overlay.style.background = 'rgba(0,0,0,0.7)';
-    overlay.innerHTML = `<h2 style="color:red;">ELIMINATED: ${reason}</h2><p style="color:white; margin-top:8px;">You are spectating your team.</p>`;
-    document.getElementById('desktop').appendChild(overlay);
-  }
-}
-
-// Volume Slider Toggle
 function toggleVolumeSlider() {
   const p = document.getElementById('volume-popup');
   p.style.display = p.style.display === 'none' ? 'block' : 'none';
