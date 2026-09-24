@@ -12,7 +12,7 @@
   <!-- Full-Screen Windows XP Desktop -->
   <div id="desktop">
 
-    <!-- Desktop Icons (Hidden while on main menu) -->
+    <!-- Desktop Icons -->
     <div id="desktop-icons" class="desktop-icons" style="display:none;">
       <div id="recycle-bin" class="icon">
         <div class="icon-img">🗑️</div>
@@ -28,6 +28,14 @@
       </div>
     </div>
 
+    <!-- Active Agents HUD Widget (Shows who is alive, safe, or dead!) -->
+    <div id="agents-hud" class="agents-hud-box" style="display:none;">
+      <span>👥 AGENTS: </span>
+      <span style="color:#00ff66;">🟢 <span id="hud-active-count">1</span> Active</span> | 
+      <span style="color:#ffff66;">🛡️ <span id="hud-safe-count">0</span> Safe</span> | 
+      <span style="color:#ff6666;">💀 <span id="hud-dead-count">0</span> Dead</span>
+    </div>
+
     <!-- Active Windows Container -->
     <div id="windows-container"></div>
     <div id="remote-cursors"></div>
@@ -40,11 +48,11 @@
       </div>
       <div class="window-body" style="text-align: center; padding: 15px;">
         <p id="shift-status-text" style="margin-bottom: 12px; font-size: 12px;">Shift in progress (7 PM - 1 AM)</p>
-        <button id="clockout-btn" class="xp-btn" onclick="clockOutShift()" disabled>Clock Out (Locked)</button>
+        <button id="clockout-btn" class="xp-dialog-btn" style="padding:6px 16px; font-weight:bold;" onclick="clockOutShift()" disabled>Clock Out (Locked)</button>
       </div>
     </div>
 
-    <!-- CLEAN TITLE SCREEN (Opaque Bliss) -->
+    <!-- CLEAN TITLE SCREEN -->
     <div id="main-menu" class="title-screen">
       <h1 class="game-logo">XP DEFENDER</h1>
       <div class="menu-buttons">
@@ -60,7 +68,7 @@
       </div>
     </div>
 
-    <!-- DYNAMIC ROOM SELECTION MODAL (Real-time Live Server List) -->
+    <!-- ROOM SELECTION MODAL -->
     <div id="rooms-modal" class="menu-overlay" style="display:none;">
       <div class="window" style="width: 500px; position: relative;">
         <div class="window-titlebar">
@@ -77,9 +85,8 @@
           </div>
 
           <p style="font-size: 11px; margin-bottom: 6px; font-weight: bold;">Live Workstations on Network:</p>
-          <!-- Live Dynamically Populated Rooms Container -->
           <div class="room-box" id="dynamic-room-list">
-            <p style="color: gray; padding: 10px; font-size: 11px;">Scanning network for active workstations...</p>
+            <p style="color: gray; padding: 10px; font-size: 11px;">Scanning network...</p>
           </div>
 
           <div style="margin-top: 15px; padding-top: 10px; border-top: 1px solid #c0c0c0; display: flex; gap: 8px;">
@@ -91,7 +98,7 @@
       </div>
     </div>
 
-    <!-- MULTIPLAYER WAITING LOBBY (MSN Messenger Style) -->
+    <!-- MULTIPLAYER WAITING LOBBY -->
     <div id="multiplayer-lobby" class="menu-overlay" style="display:none;">
       <div class="window" style="width: 520px; position: relative;">
         <div class="window-titlebar">
@@ -123,18 +130,17 @@
       </div>
     </div>
 
-    <!-- INTERMISSION BREAKROOM -->
+    <!-- SYNCHRONIZED INTERMISSION BREAKROOM (Majority Vote!) -->
     <div id="intermission-modal" class="menu-overlay" style="display:none;">
-      <div class="window" style="width: 620px; position: relative;">
+      <div class="window" style="width: 640px; position: relative;">
         <div class="window-titlebar">
           <span>💬 IT Breakroom - Shift Completed!</span>
         </div>
         <div class="window-body" style="padding: 18px; background: #ece9d8; text-align: center;">
-          <h2 id="intermission-title" style="font-size: 18px; color: #003399; margin-bottom: 4px;">SHIFT 1 CLEARED</h2>
-          <p id="intermission-summary" style="font-size: 12px; color: #333; margin-bottom: 16px;">
-            Earnings: $100 | Overtime: $0 | Total Team Bank: $100
-          </p>
-          <p style="font-size: 12px; font-weight: bold; margin-bottom: 10px;">Select 1 Modification for the Next Shift:</p>
+          <h2 id="intermission-title" style="font-size: 18px; color: #003399; margin-bottom: 4px;">SHIFT CLEARED</h2>
+          <div id="intermission-summary" style="font-size: 12px; color: #333; margin-bottom: 16px;"></div>
+          
+          <p style="font-size: 12px; font-weight: bold; margin-bottom: 10px;">VOTE FOR NEXT SHIFT MODIFICATION (Majority Rules):</p>
           <div class="draft-cards-container" id="draft-container"></div>
         </div>
       </div>
