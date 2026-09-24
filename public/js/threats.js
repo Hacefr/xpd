@@ -3,13 +3,57 @@ const Threats = {
   loserarFiles: 0,
   loserarInterval: null,
   loserarTuneInterval: null,
+  quietInterval: null,
   quietActive: false,
+  errInterval: null,
+  eyeTimeout1: null,
+  eyeTimeout2: null,
+  eyeFreezeChecker: null,
+
+  // MASTER RESET: Instantly purges and freezes all threats!
+  resetAll() {
+    // 1. Stop ERR
+    clearInterval(this.errInterval);
+    const errWin = document.getElementById('err-window');
+    if (errWin) errWin.remove();
+
+    // 2. Stop Loserar
+    clearInterval(this.loserarInterval);
+    clearInterval(this.loserarTuneInterval);
+    this.loserarInterval = null;
+    this.loserarTuneInterval = null;
+    this.loserarFiles = 0;
+    this.updateLoserarFolderView();
+
+    // 3. Stop QUIET!
+    clearInterval(this.quietInterval);
+    this.quietActive = false;
+    const slider = document.getElementById('volume-slider');
+    if (slider) slider.value = 20;
+
+    // 4. Stop ALLSEEINGEYE
+    clearTimeout(this.eyeTimeout1);
+    clearTimeout(this.eyeTimeout2);
+    if (this.eyeFreezeChecker) {
+      window.removeEventListener('mousemove', this.eyeFreezeChecker);
+      this.eyeFreezeChecker = null;
+    }
+    const banner = document.getElementById('eye-warning-banner');
+    if (banner) banner.remove();
+    const desktop = document.getElementById('desktop');
+    if (desktop) desktop.style.filter = 'none';
+
+    // Clear active windows container
+    const container = document.getElementById('windows-container');
+    if (container) container.innerHTML = '';
+  },
 
   // ==========================================
   // 1. ERR (Client-Sided QTE)
   // ==========================================
   spawnERR(curseBrokenScript = false) {
-    if (document.getElementById('err-window')) return; // Only 1 ERR at a time
+    // MUST BE IN ACTIVE SHIFT!
+    if (!inShift || isGameOver || document.getElementById('err-window')) return;
 
     const targetNumber = Math.floor(Math.random() * 5) + 3; // 3 to 7
     let currentCount = 0;
@@ -24,7 +68,6 @@ const Threats = {
     win.innerHTML = `
       <div class="window-titlebar" style="background:#cc0000;">
         <span>⚠️ Critical Exception</span>
-        <!-- No [X] close button! -->
       </div>
       <div style="padding:15px; text-align:center; background:#fff;">
         <p style="font-size:12px; margin-bottom:8px;">Target: <b>[ ${targetNumber} ]</b></p>
@@ -37,7 +80,14 @@ const Threats = {
 
     document.getElementById('windows-container').appendChild(win);
 
-    const interval = setInterval(() => {
+    clearInterval(this.errInterval);
+    this.errInterval = setInterval(() => {
+      if (!inShift || isGameOver) {
+        clearInterval(this.errInterval);
+        win.remove();
+        return;
+      }
+
       currentCount++;
       if (!curseBrokenScript) {
         const counterElem = document.getElementById('err-counter');
@@ -45,20 +95,18 @@ const Threats = {
       }
       playSynthBeep(350 + (currentCount * 60), 'sine', 0.08);
 
-      // Missed it completely
       if (currentCount > targetNumber + 1) {
-        clearInterval(interval);
+        clearInterval(this.errInterval);
         win.remove();
         eliminatePlayer("Missed ERR timing window!");
       }
     }, 1000);
 
     win.querySelector('#err-close-btn').onclick = () => {
-      clearInterval(interval);
+      clearInterval(this.errInterval);
       win.remove();
-      // Exact hit
       if (currentCount === targetNumber) {
-        playSynthBeep(850, 'triangle', 0.2); // Success!
+        playSynthBeep(850, 'triangle', 0.2);
       } else {
         eliminatePlayer("Clicked ERR too early or too late!");
       }
@@ -69,16 +117,18 @@ const Threats = {
   // 2. LOSERAR (Server-Sided Folder Files)
   // ==========================================
   startLoserar(scramble = false) {
-    if (this.loserarInterval) return;
+    if (!inShift || isGameOver || this.loserarInterval) return;
     this.loserarFiles = 0;
 
-    // Generates a file every 7 seconds
     this.loserarInterval = setInterval(() => {
-      if (!inShift || isGameOver) return;
+      if (!inShift || isGameOver) {
+        this.stopLoserar();
+        return;
+      }
+
       this.loserarFiles++;
       this.updateLoserarFolderView();
 
-      // If 3 or more files accumulate -> PANIC TUNE PLAYS!
       if (this.loserarFiles >= 3 && !this.loserarTuneInterval) {
         let tuneNote = 0;
         const notes = [440, 554, 659, 880];
@@ -91,8 +141,7 @@ const Threats = {
           playSynthBeep(notes[tuneNote % notes.length], 'square', 0.15);
           tuneNote++;
 
-          // Failed to delete files in time -> WIPE!
-          if (tuneNote >= 16) { // ~8 seconds of tune
+          if (tuneNote >= 16) {
             clearInterval(this.loserarTuneInterval);
             this.loserarTuneInterval = null;
             triggerBSOD("Loserar files corrupted System32. Files were not deleted!");
@@ -117,7 +166,8 @@ const Threats = {
     for (let i = 0; i < this.loserarFiles; i++) {
       const file = document.createElement('div');
       file.className = 'rar-file';
-      file.innerHTML = `📦 infected_archive_${i + 1}.rar <button class="xp-dialog-btn" style="padding:2px 6px; font-size:10px; margin-left:10px;" onclick="Threats.deleteFile(${i})">Delete</button>`;
+      file.style.padding = '4px';
+      file.innerHTML = `📦 infected_archive_${i + 1}.rar <button class="xp-dialog-btn" style="padding:2px 6px; font-size:10px; margin-left:8px;" onclick="Threats.deleteFile(${i})">Delete</button>`;
       list.appendChild(file);
     }
   },
@@ -138,33 +188,31 @@ const Threats = {
   // 3. QUIET! (Server-Sided Volume Creep)
   // ==========================================
   startQuiet(curseMedium = false) {
-    if (this.quietActive) return;
+    if (!inShift || isGameOver || this.quietActive) return;
     this.quietActive = true;
 
     const slider = document.getElementById('volume-slider');
-    const interval = setInterval(() => {
+    clearInterval(this.quietInterval);
+
+    this.quietInterval = setInterval(() => {
       if (!inShift || isGameOver) {
-        clearInterval(interval);
+        clearInterval(this.quietInterval);
         this.quietActive = false;
         return;
       }
 
-      // Automatically creeps volume upwards!
       let val = parseInt(slider.value) + 2;
       slider.value = Math.min(100, val);
 
-      // Warning beep when volume is high
       if (val > 80) playSynthBeep(val * 10, 'sine', 0.05);
 
-      // Hit 100%? Explodes PC!
       if (val >= 100) {
-        clearInterval(interval);
+        clearInterval(this.quietInterval);
         triggerBSOD("QUIET! blew out speakers at 100% volume. System bricked!");
       }
 
-      // Curse: MEDIUM (Don't let it drop below 40% either!)
       if (curseMedium && val < 40) {
-        clearInterval(interval);
+        clearInterval(this.quietInterval);
         triggerBSOD("QUIET! Curse [MEDIUM] triggered: Volume dropped below 40%!");
       }
     }, 400);
@@ -174,12 +222,12 @@ const Threats = {
   // 4. ALLSEEINGEYE.EXE (Client-Sided Freeze)
   // ==========================================
   triggerAllSeeingEye(curseVoided = false) {
-    if (document.getElementById('eye-warning-banner')) return;
+    // MUST BE IN ACTIVE SHIFT!
+    if (!inShift || isGameOver || document.getElementById('eye-warning-banner')) return;
 
     const desktop = document.getElementById('desktop');
     let armed = false;
 
-    // Visual Banner Warning
     const banner = document.createElement('div');
     banner.id = 'eye-warning-banner';
     banner.style.position = 'fixed';
@@ -198,7 +246,13 @@ const Threats = {
     desktop.style.filter = curseVoided ? 'hue-rotate(270deg)' : 'sepia(1) saturate(3)';
     playSynthBeep(300, 'sawtooth', 0.3);
 
-    setTimeout(() => {
+    this.eyeTimeout1 = setTimeout(() => {
+      if (!inShift || isGameOver) {
+        if (banner) banner.remove();
+        desktop.style.filter = 'none';
+        return;
+      }
+
       armed = true;
       banner.style.background = '#ff0000';
       banner.style.color = '#fff';
@@ -206,31 +260,31 @@ const Threats = {
       desktop.style.filter = curseVoided ? 'invert(1)' : 'hue-rotate(140deg) saturate(5)';
       playSynthBeep(200, 'sawtooth', 0.6);
 
-      // Check mouse movement
-      const freezeChecker = () => {
-        if (armed) {
-          window.removeEventListener('mousemove', freezeChecker);
+      this.eyeFreezeChecker = () => {
+        if (armed && inShift && !isGameOver) {
+          window.removeEventListener('mousemove', this.eyeFreezeChecker);
           desktop.style.filter = 'none';
           banner.remove();
           eliminatePlayer("Moved mouse during ALLSEEINGEYE!");
         }
       };
-      window.addEventListener('mousemove', freezeChecker);
+      window.addEventListener('mousemove', this.eyeFreezeChecker);
 
-      // Safe stage after 2.5 seconds
-      setTimeout(() => {
+      this.eyeTimeout2 = setTimeout(() => {
         armed = false;
-        window.removeEventListener('mousemove', freezeChecker);
+        if (this.eyeFreezeChecker) {
+          window.removeEventListener('mousemove', this.eyeFreezeChecker);
+          this.eyeFreezeChecker = null;
+        }
         desktop.style.filter = 'none';
         if (banner) banner.remove();
-        playSynthBeep(700, 'triangle', 0.2); // Safe!
+        playSynthBeep(700, 'triangle', 0.2);
       }, 2500);
 
     }, 1500);
   }
 };
 
-// Open Loserar Folder UI
 function openLoserarFolder() {
   let win = document.getElementById('loserar-window');
   if (!win) {
