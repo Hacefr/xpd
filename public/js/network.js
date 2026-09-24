@@ -1,47 +1,96 @@
 const socket = io();
 window.isSoloMode = false;
 
-// 1. Start Solo Game (LOGiN clicked)
+// 1. START SOLO GAME (LOGiN)
 function startSoloGame() {
-  window.isSoloMode = true; // Sets mode to solo -> deaths trigger BSOD immediately!
+  window.isSoloMode = true;
   document.getElementById('main-menu').style.display = 'none';
-  const soloRoomId = "Solo_" + Math.floor(Math.random() * 10000);
-  socket.emit('join-room', { roomId: soloRoomId, name: "Solo_Agent" });
+  
+  // Show Desktop & Taskbar!
+  document.getElementById('desktop-icons').style.display = 'flex';
+  document.getElementById('taskbar').style.display = 'flex';
+
+  // UNFREEZE: Start Shift 1 immediately!
+  startShift();
 }
 
-// 2. Open / Close Rooms Lobby
+// 2. OPEN / CLOSE ROOMS MODAL
 function openRoomsLobby() {
   document.getElementById('rooms-modal').style.display = 'flex';
 }
-
 function closeRoomsLobby() {
   document.getElementById('rooms-modal').style.display = 'none';
 }
 
+// 3. JOIN MULTIPLAYER ROOM -> ENTERS MSN WAITING LOBBY!
 function joinSpecificRoom(roomName) {
   window.isSoloMode = false;
   const playerName = document.getElementById('player-name-input').value.trim() || "Agent_XP";
+  
   document.getElementById('main-menu').style.display = 'none';
   document.getElementById('rooms-modal').style.display = 'none';
+
+  // Open the MSN Waiting Room!
+  document.getElementById('multiplayer-lobby').style.display = 'flex';
+  document.getElementById('lobby-titlebar').innerText = `💬 MSN Messenger - [${roomName}]`;
+
   socket.emit('join-room', { roomId: roomName, name: playerName });
 }
 
-// Host a Custom Room using the in-game input (No prompt!)
 function submitCustomRoom() {
   const customName = document.getElementById('custom-room-input').value.trim();
-  if (customName) {
-    joinSpecificRoom(customName);
+  if (customName) joinSpecificRoom(customName);
+}
+
+// 4. LOBBY SYNC & CHAT
+socket.on('update-lobby', (data) => {
+  const list = document.getElementById('lobby-player-list');
+  list.innerHTML = '';
+  data.players.forEach(p => {
+    const row = document.createElement('div');
+    row.innerText = `🟢 ${p.name}`;
+    list.appendChild(row);
+  });
+});
+
+function sendLobbyChat() {
+  const input = document.getElementById('lobby-chat-input');
+  const text = input.value.trim();
+  if (text) {
+    socket.emit('send-lobby-chat', text);
+    input.value = '';
   }
 }
 
-// Broadcast local cursor
+socket.on('receive-lobby-chat', (data) => {
+  const box = document.getElementById('lobby-chat-box');
+  const msg = document.createElement('p');
+  msg.innerHTML = `<b>${data.name}:</b> ${data.text}`;
+  box.appendChild(msg);
+  box.scrollTop = box.scrollHeight;
+});
+
+// 5. START SHIFT FOR MULTIPLAYER
+function triggerStartShift() {
+  socket.emit('trigger-start-shift');
+}
+
+socket.on('shift-started', () => {
+  // Close lobby, show desktop, and start shift!
+  document.getElementById('multiplayer-lobby').style.display = 'none';
+  document.getElementById('desktop-icons').style.display = 'flex';
+  document.getElementById('taskbar').style.display = 'flex';
+
+  startShift();
+});
+
+// Cursor Sync
 window.addEventListener('mousemove', (e) => {
   const normX = e.clientX / window.innerWidth;
   const normY = e.clientY / window.innerHeight;
   socket.emit('cursor-move', { x: normX, y: normY });
 });
 
-// Render remote teammate cursors
 const cursorContainer = document.getElementById('remote-cursors');
 socket.on('remote-cursor-move', (data) => {
   let c = document.getElementById('cursor-' + data.id);
