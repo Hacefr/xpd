@@ -7,17 +7,15 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-// Serve static files from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Active rooms storage
 const rooms = {};
 
 io.on('connection', (socket) => {
   let currentRoom = null;
   let playerName = "Agent_" + socket.id.substring(0, 4);
 
-  // 1. Join / Create Room
+  // Join or Create Room
   socket.on('join-room', ({ roomId, name }) => {
     if (currentRoom) socket.leave(currentRoom);
 
@@ -26,22 +24,34 @@ io.on('connection', (socket) => {
     socket.join(roomId);
 
     if (!rooms[roomId]) {
-      rooms[roomId] = { players: [], bank: 0, shift: 1 };
+      rooms[roomId] = { players: [], bank: 0, shift: 1, inShift: false };
     }
 
     rooms[roomId].players.push({ id: socket.id, name: playerName });
 
-    // Notify room of new player
-    io.to(roomId).emit('player-joined', {
-      id: socket.id,
-      name: playerName,
+    // Sync player list to the lobby
+    io.to(roomId).emit('update-lobby', {
+      roomId,
       players: rooms[roomId].players
     });
 
     console.log(`[+] ${playerName} joined room: ${roomId}`);
   });
 
-  // 2. Sync Cursor Movement (Normalized percentages: 0.0 to 1.0)
+  // Lobby Chat
+  socket.on('send-lobby-chat', (text) => {
+    if (!currentRoom) return;
+    io.to(currentRoom).emit('receive-lobby-chat', { name: playerName, text });
+  });
+
+  // Start Shift for whole room
+  socket.on('trigger-start-shift', () => {
+    if (!currentRoom) return;
+    rooms[currentRoom].inShift = true;
+    io.to(currentRoom).emit('shift-started');
+  });
+
+  // Cursor sync
   socket.on('cursor-move', (coords) => {
     if (!currentRoom) return;
     socket.to(currentRoom).emit('remote-cursor-move', {
@@ -52,22 +62,14 @@ io.on('connection', (socket) => {
     });
   });
 
-  // 3. Sync Server Threats (Loserar files, QUIET! volume, WannaCry)
-  socket.on('sync-server-threat', (data) => {
-    if (!currentRoom) return;
-    socket.to(currentRoom).emit('receive-server-threat', data);
-  });
-
-  // 4. Dead Chat messages (Blind to living players)
-  socket.on('send-dead-chat', (msg) => {
-    if (!currentRoom) return;
-    io.to(currentRoom).emit('receive-dead-chat', { name: playerName, text: msg });
-  });
-
-  // 5. Disconnect handling
+  // Disconnect
   socket.on('disconnect', () => {
     if (currentRoom && rooms[currentRoom]) {
       rooms[currentRoom].players = rooms[currentRoom].players.filter(p => p.id !== socket.id);
+      io.to(currentRoom).emit('update-lobby', {
+        roomId: currentRoom,
+        players: rooms[currentRoom].players
+      });
       socket.to(currentRoom).emit('player-left', { id: socket.id });
       if (rooms[currentRoom].players.length === 0) delete rooms[currentRoom];
     }
@@ -75,4 +77,4 @@ io.on('connection', (socket) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`XP Defender server online on port ${PORT}`));
+server.listen(PORT, () => console.log(`Server online on port ${PORT}`));
