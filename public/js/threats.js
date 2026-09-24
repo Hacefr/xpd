@@ -43,7 +43,7 @@ const Threats = {
   eyeFreezeChecker: null,
   infectedFolderIndices: [],
 
-  // MASTER RESET
+  // MASTER RESET: Completely halts and clears all active threats
   resetAll() {
     clearInterval(this.errInterval);
     const errWin = document.getElementById('err-window');
@@ -144,14 +144,14 @@ const Threats = {
   },
 
   // ==========================================
-  // 2. LOSERAR (Folder Files + GRID Scramble Curse!)
+  // 2. LOSERAR (Folder Files + Clean Desktop Grid)
   // ==========================================
   startLoserar(scramble = false) {
     if (!inShift || isGameOver || this.loserarInterval) return;
     this.loserarFiles = 0;
     this.infectedFolderIndices = [];
 
-    // SCRAMBLE CURSE: Floods the desktop with a neat GRID of duplicate folders!
+    // SCRAMBLE CURSE: Spawns the clean desktop grid!
     if (scramble) {
       this.spawnScrambleGrid();
     }
@@ -164,9 +164,9 @@ const Threats = {
 
       this.loserarFiles++;
 
-      // If scramble is active, hide the file inside a random grid folder!
+      // Hide real files inside random grid folders
       if (scramble) {
-        const totalFolders = 36;
+        const totalFolders = 32;
         const randomTarget = Math.floor(Math.random() * totalFolders);
         if (!this.infectedFolderIndices.includes(randomTarget)) {
           this.infectedFolderIndices.push(randomTarget);
@@ -199,31 +199,18 @@ const Threats = {
     }, 7000);
   },
 
-  // Spawn Duplicates in a neat Desktop Grid
+  // Pure CSS Responsive Grid Spawner
   spawnScrambleGrid() {
     this.removeScrambleGrid();
     const container = document.createElement('div');
     container.id = 'scramble-grid-container';
     document.getElementById('desktop').appendChild(container);
 
-    const startX = 110;
-    const startY = 20;
-    const colSpacing = 85;
-    const rowSpacing = 85;
-
-    const cols = Math.floor((window.innerWidth - 140) / colSpacing);
-    const rows = Math.floor((window.innerHeight - 80) / rowSpacing);
-    const total = Math.min(36, cols * rows);
-
-    for (let i = 0; i < total; i++) {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-
+    const totalFolders = 32; // Clean 4 rows x 8 columns
+    for (let i = 0; i < totalFolders; i++) {
       const folder = document.createElement('div');
       folder.className = 'grid-folder';
       folder.id = 'grid-folder-' + i;
-      folder.style.left = (startX + col * colSpacing) + 'px';
-      folder.style.top = (startY + row * rowSpacing) + 'px';
       folder.innerHTML = `
         <div class="folder-icon-img">📁</div>
         <span class="folder-name">Loserar_${i + 1}</span>
@@ -235,7 +222,6 @@ const Threats = {
   },
 
   highlightTrackedFolders() {
-    // If team has Tracker Upgrade, glowing red outline on infected folders!
     if (!window.hasTrackerUpgrade) return;
     this.infectedFolderIndices.forEach(idx => {
       const el = document.getElementById('grid-folder-' + idx);
@@ -252,8 +238,8 @@ const Threats = {
     win.id = 'grid-window-' + index;
     win.className = 'window';
     win.style.width = '300px';
-    win.style.left = (150 + (index % 5) * 30) + 'px';
-    win.style.top = (100 + (index % 5) * 30) + 'px';
+    win.style.left = (window.innerWidth / 2 - 150 + (index % 4) * 20) + 'px';
+    win.style.top = (window.innerHeight / 2 - 100 + (index % 4) * 20) + 'px';
     win.style.zIndex = ++window.highestZIndex;
 
     win.innerHTML = `
@@ -263,8 +249,8 @@ const Threats = {
       </div>
       <div class="window-body" style="padding: 15px; background: #fff; text-align: center;">
         ${isInfected ? `
-          <p style="color:red; font-size:12px; font-weight:bold; margin-bottom:10px;">⚠️ INFECTED FILE FOUND!</p>
-          <div style="padding:10px; border:1px dashed red; margin-bottom:10px;">📦 infected_${index + 1}.rar</div>
+          <p style="color:red; font-size:12px; font-weight:bold; margin-bottom:10px;">⚠️ INFECTED FILE DETECTED!</p>
+          <div style="padding:10px; border:1px dashed red; margin-bottom:10px; font-size:12px;">📦 infected_${index + 1}.rar</div>
           <button class="xp-dialog-btn" style="background:#ffcccc; font-weight:bold;" onclick="Threats.cleanGridFolder(${index})">Delete Virus File</button>
         ` : `
           <p style="color:gray; font-size:11px;">This folder is clean (0 files found).</p>
@@ -430,7 +416,6 @@ const Threats = {
   }
 };
 
-// Open Loserar Folder UI (Draggable)
 function openLoserarFolder() {
   let win = document.getElementById('loserar-window');
   if (!win) {
