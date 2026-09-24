@@ -6,20 +6,23 @@ function startSoloGame() {
   window.isSoloMode = true;
   document.getElementById('main-menu').style.display = 'none';
   
-  // Show Desktop & Taskbar!
+  // Show Desktop & Taskbar
   document.getElementById('desktop-icons').style.display = 'flex';
   document.getElementById('taskbar').style.display = 'flex';
 
-  // UNFREEZE: Start Shift 1 immediately!
+  // Start Shift 1 cleanly
   startShift();
 }
 
-// 2. OPEN / CLOSE ROOMS MODAL
+// 2. OPEN / CLOSE ROOMS MODAL (Fixed 1-Click!)
 function openRoomsLobby() {
-  document.getElementById('rooms-modal').style.display = 'flex';
+  document.getElementById('main-menu').style.display = 'none'; // Hides Title Screen!
+  document.getElementById('rooms-modal').style.display = 'flex'; // Shows Rooms immediately!
 }
+
 function closeRoomsLobby() {
   document.getElementById('rooms-modal').style.display = 'none';
+  document.getElementById('main-menu').style.display = 'flex'; // Restores Title Screen!
 }
 
 // 3. JOIN MULTIPLAYER ROOM -> ENTERS MSN WAITING LOBBY!
@@ -27,10 +30,7 @@ function joinSpecificRoom(roomName) {
   window.isSoloMode = false;
   const playerName = document.getElementById('player-name-input').value.trim() || "Agent_XP";
   
-  document.getElementById('main-menu').style.display = 'none';
   document.getElementById('rooms-modal').style.display = 'none';
-
-  // Open the MSN Waiting Room!
   document.getElementById('multiplayer-lobby').style.display = 'flex';
   document.getElementById('lobby-titlebar').innerText = `💬 MSN Messenger - [${roomName}]`;
 
@@ -76,7 +76,7 @@ function triggerStartShift() {
 }
 
 socket.on('shift-started', () => {
-  // Close lobby, show desktop, and start shift!
+  // Close lobby, show desktop, and start shift together!
   document.getElementById('multiplayer-lobby').style.display = 'none';
   document.getElementById('desktop-icons').style.display = 'flex';
   document.getElementById('taskbar').style.display = 'flex';
